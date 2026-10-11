@@ -19,9 +19,9 @@
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 .wrap{position:relative;max-width:860px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
-header.mast{display:grid;gap:6px;padding-block:8px 18px;border-bottom:3px solid var(--ink)}
+header.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding-block:8px 18px;border-bottom:3px solid var(--ink)}
 .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-h1{font-family:var(--display);font-weight:900;font-size:clamp(44px,11vw,84px);line-height:.88;margin:0;text-transform:uppercase;letter-spacing:-.01em}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(28px,calc(9.4vw - 4px),84px);line-height:.88;margin:0;text-transform:uppercase;letter-spacing:-.01em}
 h1 span{color:var(--accent)}
 .sub{color:var(--muted);margin:4px 0 0;max-width:60ch}
 .updated{color:var(--muted);font-size:14px}
@@ -258,7 +258,10 @@ function km(a,b){ const R=6371,r=x=>x*Math.PI/180; const dLa=r(b[0]-a[0]), dLo=r
   const h=Math.sin(dLa/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
 const venuePos=g=>(typeof VENUE_POS!=="undefined"&&VENUE_POS[g.venue+"|"+g.city])||null;
 let meLoc=load("kk-meloc",null), meLabel=load("kk-melabel",""), meApprox=load("kk-meapprox",false);
-const homePos=()=>state.home==="__me"?meLoc:(HOMES[state.home]||null);
+let gpsLoc=load("kk-gpsloc",null), gpsLabel=load("kk-gpslabel","");
+if(meLoc&&String(meLabel).startsWith("Min posisjon")){ gpsLoc=meLoc; store("kk-gpsloc",gpsLoc); gpsLabel=String(meLabel).replace(/^Min posisjon( – nær )?/,""); store("kk-gpslabel",gpsLabel);
+  meLoc=null; store("kk-meloc",null); meLabel=""; store("kk-melabel",""); if(state.home==="__me"){ state.home="__gps"; store("kk-home","__gps"); } }
+const homePos=()=>state.home==="__me"?meLoc:state.home==="__gps"?gpsLoc:(HOMES[state.home]||null);
 function distOf(g){ const h=homePos(); if(!h) return null; const p=venuePos(g)||CITY[g.city]; if(!p) return null; return km(h, p); }
 function distLabel(g,k){ if(!venuePos(g)) return k<5?"i nærheten":Math.round(k)+" km"; return k<10?k.toFixed(1).replace(".",",")+" km":Math.round(k)+" km"; }
 
@@ -323,7 +326,7 @@ placePanel.addEventListener("click",e=>{ e.stopPropagation(); const b=e.target.c
   placePanel.hidden=true; placeBtn.setAttribute("aria-expanded","false"); render(); });
 document.addEventListener("click",()=>{ if(!placePanel.hidden){ placePanel.hidden=true; placeBtn.setAttribute("aria-expanded","false"); } });
 function inPlace(x){ if(!state.place) return true; const v=state.place.slice(2); return state.place[0]==="f" ? x.county===v : x.city===v; }
-fill($("home"), ["__me"].concat(Object.keys(HOMES).sort(sortNb)));
+fill($("home"), ["__me","__gps"].concat(Object.keys(HOMES).sort(sortNb)));
 const homeBtn=$("homeBtn"), homePanel=$("homePanel");
 (function buildHomes(){
   const all=Object.keys(HOMES).sort(sortNb), subs={};
@@ -341,7 +344,7 @@ const homeBtn=$("homeBtn"), homePanel=$("homePanel");
   });
   const none=opt("","✕ Ikke bruk hjemsted"); none.classList.add("pnone"); homePanel.appendChild(none);
 })();
-const syncHome=()=>{ if(window.__showCur) window.__showCur(); homeBtn.textContent=state.home==="__me"&&meLoc?"📍 "+(meLabel&&!parseLoc(meLabel)&&!meLabel.startsWith("Min posisjon")?meLabel.split(",")[0]:"Min posisjon"):state.home&&HOMES[state.home]?state.home:"Velg hjemsted";
+const syncHome=()=>{ if(window.__showCur) window.__showCur(); homeBtn.textContent=state.home==="__gps"&&gpsLoc?"📍 Min posisjon":state.home==="__me"&&meLoc?"🏠 Hjem":state.home&&HOMES[state.home]?state.home:"Velg hjemsted";
   homePanel.querySelectorAll(".popt").forEach(b=>b.setAttribute("aria-current",String(b.dataset.home===(state.home||"")))); };
 homeBtn.addEventListener("click",e=>{ e.stopPropagation(); placePanel.hidden=true; homePanel.hidden=!homePanel.hidden; homeBtn.setAttribute("aria-expanded",String(!homePanel.hidden));
   if(!homePanel.hidden){ const cur=state.home&&state.home.indexOf(" – ")>0?state.home.split(" – ")[0]:null;
@@ -351,7 +354,7 @@ homePanel.addEventListener("click",e=>{ e.stopPropagation(); const b=e.target.cl
   const sel=$("home"); sel.value=b.dataset.home; sel.dispatchEvent(new Event("change"));
   homePanel.hidden=true; homeBtn.setAttribute("aria-expanded","false"); });
 document.addEventListener("click",()=>{ if(!homePanel.hidden){ homePanel.hidden=true; homeBtn.setAttribute("aria-expanded","false"); } });
-$("home").value = (HOMES[state.home]||(state.home==="__me"&&meLoc)) ? state.home : "";
+$("home").value = (HOMES[state.home]||(state.home==="__me"&&meLoc)||(state.home==="__gps"&&gpsLoc)) ? state.home : "";
 function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
   const m=t.match(/(-?\d{1,2}[.,]\d{2,})\s*[NnSs]?[^\d-]+?(-?\d{1,3}[.,]\d{2,})/); if(!m) return null;
   const la=parseFloat(m[1].replace(",",".")), lo=parseFloat(m[2].replace(",","."));
@@ -359,33 +362,36 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
 (function buildPaste(){
   const box=el("div","ppaste");
   const meOpt=el("button","popt"); meOpt.type="button"; meOpt.dataset.home="__me"; meOpt.append(el("span",null,"📍 Bytt tilbake til lagret adresse")); meOpt.id="meOpt"; meOpt.hidden=!meLoc;
-  const lab=el("label","pplab","Eller skriv adresse"); lab.htmlFor="locIn";
+  const lab=el("label","pplab","Sett hjemadresse"); lab.htmlFor="locIn";
   const row=el("div","pprow"); const inp=document.createElement("input"); inp.id="locIn"; inp.type="text"; inp.inputMode="text"; inp.autocomplete="off"; inp.placeholder="F.eks. Strømsø torg 4, Drammen";
   const go=el("button","ppgo","Bruk"); go.type="button"; row.append(inp,go);
-  const gpsB=el("button","ppbtn ppmain","📍 Finn min posisjon"); gpsB.type="button";
+  const gpsOpt=el("button","popt"); gpsOpt.type="button"; gpsOpt.dataset.home="__gps"; gpsOpt.append(el("span",null,"📍 Min posisjon"));
   const cur=el("p","ppcur","");
   const err=el("p","pperr",""); err.setAttribute("role","status");
   const webHint=el("p","pphelp"); webHint.id="webHint"; webHint.innerHTML='Nøyaktig adressesøk og «Finn min posisjon» virker bare på nettsiden: <a href="https://taveisten.github.io/konsertkalender/" target="_blank" rel="noopener">taveisten.github.io/konsertkalender</a>';
   const cands=el("div","ppcands");
-  box.append(meOpt,gpsB,lab,row,cands,cur,err);
+  box.append(gpsOpt,meOpt,lab,row,cands,cur,err);
   homePanel.insertBefore(box,homePanel.firstChild);
   const fmtC=v=>v[0].toFixed(5)+", "+v[1].toFixed(5);
   const closeP=()=>{ homePanel.hidden=true; homeBtn.setAttribute("aria-expanded","false"); };
   const setLoc=(v,lbl,keepOpen,approx)=>{ meApprox=!!approx; store("kk-meapprox",meApprox); meLoc=v; store("kk-meloc",v); meLabel=lbl||""; store("kk-melabel",meLabel); meOpt.hidden=false; err.textContent=""; inp.value=""; cands.innerHTML="";
     const sel=$("home"); sel.value="__me"; sel.dispatchEvent(new Event("change")); showCur(); if(!keepOpen) closeP(); };
-  const showCur=()=>{ const inUse=state.home==="__me"&&meLoc; meOpt.hidden=!meLoc||inUse;
-    cur.textContent = meLoc ? (inUse?"✓ I bruk: ":"Lagret: ")+(meLabel?meLabel+" ("+fmtC(meLoc)+")":fmtC(meLoc))+(meApprox?" – omtrentlig, sjekk avstandene":"") : ""; };
+  const showCur=()=>{ meOpt.hidden=!meLoc; if(meLoc) meOpt.firstChild.textContent="🏠 Hjem – "+(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:fmtC(meLoc));
+    lab.textContent=meLoc?"Endre hjemadresse":"Sett hjemadresse";
+    cur.textContent = state.home==="__gps"&&gpsLoc ? "✓ I bruk: Min posisjon"+(gpsLabel?" – nær "+gpsLabel:"")+" ("+fmtC(gpsLoc)+")"
+      : meLoc ? (state.home==="__me"?"✓ I bruk: Hjem – ":"Hjem: ")+(meLabel?meLabel+" ("+fmtC(meLoc)+")":fmtC(meLoc))+(meApprox?" – omtrentlig, sjekk avstandene":"") : ""; };
   window.__showCur=showCur; showCur();
-  const getGps=manual=>{ if(!navigator.geolocation){ if(manual) err.textContent="Denne nettleseren kan ikke gi posisjon. Skriv adresse i stedet."; return; }
+  const useGps=()=>{ const sel=$("home"); sel.value="__gps"; sel.dispatchEvent(new Event("change")); showCur(); syncHome(); };
+  const getGps=manual=>{ if(!navigator.geolocation){ if(manual) err.textContent="Denne nettleseren kan ikke gi posisjon."; return; }
     if(manual) err.textContent="Finner posisjonen din …";
     navigator.geolocation.getCurrentPosition(p=>{ const v=[Math.round(p.coords.latitude*1e5)/1e5,Math.round(p.coords.longitude*1e5)/1e5];
-        if(!manual&&!(state.home==="__me")) return;
-        setLoc(v,"Min posisjon",false,false); store("kk-megps",true); savePrefs();
-        geoRev(v).then(g=>{ if(g&&meLoc&&meLoc[0]===v[0]&&meLoc[1]===v[1]){ meLabel="Min posisjon – nær "+g; store("kk-melabel",meLabel); savePrefs(); showCur(); syncHome(); } }); },
-      e=>{ if(manual) err.textContent = e&&e.code===1 ? "Posisjon er ikke tillatt for denne siden. Slå det på i telefonens innstillinger for nettleseren, eller skriv adresse." : "Fant ikke posisjonen din. Prøv igjen, eller skriv adresse."; },
-      {enableHighAccuracy:true,timeout:15000,maximumAge:120000}); };
-  gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
-  if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);
+        if(!manual&&state.home!=="__gps") return;
+        gpsLoc=v; store("kk-gpsloc",v); err.textContent=""; useGps(); if(manual) closeP();
+        geoRev(v).then(g=>{ if(g&&gpsLoc===v){ gpsLabel=g; store("kk-gpslabel",g); showCur(); } }); },
+      e=>{ if(manual) err.textContent = e&&e.code===1 ? "Posisjon er ikke tillatt for denne siden. Slå det på i telefonens innstillinger for nettleseren, eller bruk Hjem." : "Fant ikke posisjonen din. Prøv igjen, eller bruk Hjem."; },
+      {enableHighAccuracy:true,timeout:15000,maximumAge:60000}); };
+  gpsOpt.addEventListener("click",ev=>{ ev.stopPropagation(); if(gpsLoc){ useGps(); closeP(); getGps(false); } else getGps(true); });
+  if(state.home==="__gps") setTimeout(()=>getGps(false),300);
   let busy=false;
   const cap=w=>String(w||"").toLowerCase().replace(/(^|[\s-])\S/g,m=>m.toUpperCase());
   const geoRaw=async(params)=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),8000);
@@ -420,7 +426,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
     const sample=await getSample(); if(!sample) return;
     try{ const r=await sample.json("Hvilken adresse (gate, nummer, postnummer og sted) ligger nærmest disse koordinatene i Norge: "+fmtC(v)+"? Svar bare med JSON {\"adresse\": tekst} eller {\"adresse\": \"\"} hvis du ikke vet.",{modelTier:"default"});
       if(r&&r.adresse&&meLoc&&meLoc[0]===v[0]&&meLoc[1]===v[1]){ meLabel=String(r.adresse).slice(0,120); store("kk-melabel",meLabel); savePrefs(); showCur(); syncHome(); } }catch(e){} };
-  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return; if(!ta) store("kk-megps",false); cands.innerHTML="";
+  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return; cands.innerHTML="";
     const v=parseLoc(t); if(v){ setLoc(v,"",false); reverse(v); return; }
     if(!/[A-Za-zÆØÅæøå]{3,}/.test(t)){ err.textContent="Fant ingen adresse eller koordinater i teksten."; return; }
     busy=true; go.disabled=true; err.textContent="Finner adressen …";
@@ -481,7 +487,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
 $("genre").addEventListener("change",e=>{state.genre=e.target.value; render();});
 $("dist").addEventListener("change",e=>{state.dist=e.target.value; render();});
 $("home").addEventListener("change",e=>{ state.home=e.target.value; store("kk-home",state.home); savePrefs(); render();});
-if(state.home==="__me"&&!meLoc){ state.home=""; $("home").value=""; }
+if((state.home==="__me"&&!meLoc)||(state.home==="__gps"&&!gpsLoc)){ state.home=""; $("home").value=""; }
 $("q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase(); render();});
 document.querySelector(".tabs").addEventListener("click",e=>{ const b=e.target.closest(".tab"); if(!b) return; state.view=b.dataset.view; render(); });
 $("pins").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; state[b.dataset.k]=""; render(); });

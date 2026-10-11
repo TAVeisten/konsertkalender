@@ -3,7 +3,7 @@
 
 The artifact at claude.ai is the master copy (the daily update edits it).
 This script copies it and adds what only works outside claude.ai:
-  - "Finn min posisjon" (the phone's GPS)
+  - "Min posisjon" (the phone's GPS) as its own choice next to "Hjem" (the typed address)
   - address search that goes straight to Kartverket (already in the code; works here)
 
 Usage: python3 tools/build_site.py <artifact.html> <index.html>
@@ -26,23 +26,48 @@ rep('<meta name=viewport content="width=device-width,initial-scale=1,viewport-fi
     '<meta name="theme-color" content="#D23347"><meta name="apple-mobile-web-app-capable" content="yes">'
     '<meta name="apple-mobile-web-app-title" content="Konserter"><meta name="mobile-web-app-capable" content="yes">')
 
-# GPS button in the "Nær meg" panel
+# phone width: the big title must not be wider than the screen (it pushed the whole page sideways)
+rep('font-size:clamp(44px,11vw,84px);line-height:.88;', 'font-size:clamp(28px,calc(9.4vw - 4px),84px);line-height:.88;')
+rep('.mast{display:grid;gap:6px;', '.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;')
+# --- Hjem + Min posisjon as two separate places ---
+# meLoc/meLabel = Hjem (typed address, home value "__me"); gpsLoc/gpsLabel = Min posisjon (phone GPS, home value "__gps")
+rep('let meLoc=load("kk-meloc",null), meLabel=load("kk-melabel",""), meApprox=load("kk-meapprox",false);',
+    r'''let meLoc=load("kk-meloc",null), meLabel=load("kk-melabel",""), meApprox=load("kk-meapprox",false);
+let gpsLoc=load("kk-gpsloc",null), gpsLabel=load("kk-gpslabel","");
+if(meLoc&&String(meLabel).startsWith("Min posisjon")){ gpsLoc=meLoc; store("kk-gpsloc",gpsLoc); gpsLabel=String(meLabel).replace(/^Min posisjon( – nær )?/,""); store("kk-gpslabel",gpsLabel);
+  meLoc=null; store("kk-meloc",null); meLabel=""; store("kk-melabel",""); if(state.home==="__me"){ state.home="__gps"; store("kk-home","__gps"); } }''')
+rep('const homePos=()=>state.home==="__me"?meLoc:(HOMES[state.home]||null);',
+    'const homePos=()=>state.home==="__me"?meLoc:state.home==="__gps"?gpsLoc:(HOMES[state.home]||null);')
+rep('fill($("home"), ["__me"].concat(', 'fill($("home"), ["__me","__gps"].concat(')
+rep('homeBtn.textContent=state.home==="__me"&&meLoc?"📍 "+(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:"Min posisjon"):',
+    'homeBtn.textContent=state.home==="__gps"&&gpsLoc?"📍 Min posisjon":state.home==="__me"&&meLoc?"🏠 Hjem":')
+rep('$("home").value = (HOMES[state.home]||(state.home==="__me"&&meLoc)) ? state.home : "";',
+    '$("home").value = (HOMES[state.home]||(state.home==="__me"&&meLoc)||(state.home==="__gps"&&gpsLoc)) ? state.home : "";')
+rep('if(state.home==="__me"&&!meLoc){ state.home=""; $("home").value=""; }',
+    'if((state.home==="__me"&&!meLoc)||(state.home==="__gps"&&!gpsLoc)){ state.home=""; $("home").value=""; }')
 rep('  const go=el("button","ppgo","Bruk"); go.type="button"; row.append(inp,go);',
     '  const go=el("button","ppgo","Bruk"); go.type="button"; row.append(inp,go);\n'
-    '  const gpsB=el("button","ppbtn ppmain","📍 Finn min posisjon"); gpsB.type="button";')
-rep('box.append(meOpt,webHint,lab,row,cands,cur,err);', 'box.append(meOpt,gpsB,lab,row,cands,cur,err);')
+    '  const gpsOpt=el("button","popt"); gpsOpt.type="button"; gpsOpt.dataset.home="__gps"; gpsOpt.append(el("span",null,"📍 Min posisjon"));')
+rep('box.append(meOpt,webHint,lab,row,cands,cur,err);', 'box.append(gpsOpt,meOpt,lab,row,cands,cur,err);')
+rep('''  const showCur=()=>{ const inUse=state.home==="__me"&&meLoc; meOpt.hidden=!meLoc||inUse;
+    cur.textContent = meLoc ? (inUse?"✓ I bruk: ":"Lagret: ")+(meLabel?meLabel+" ("+fmtC(meLoc)+")":fmtC(meLoc))+(meApprox?" – omtrentlig, sjekk avstandene":"") : ""; };''',
+    '''  const showCur=()=>{ meOpt.hidden=!meLoc; if(meLoc) meOpt.firstChild.textContent="🏠 Hjem – "+(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:fmtC(meLoc));
+    lab.textContent=meLoc?"Endre hjemadresse":"Sett hjemadresse";
+    cur.textContent = state.home==="__gps"&&gpsLoc ? "✓ I bruk: Min posisjon"+(gpsLabel?" – nær "+gpsLabel:"")+" ("+fmtC(gpsLoc)+")"
+      : meLoc ? (state.home==="__me"?"✓ I bruk: Hjem – ":"Hjem: ")+(meLabel?meLabel+" ("+fmtC(meLoc)+")":fmtC(meLoc))+(meApprox?" – omtrentlig, sjekk avstandene":"") : ""; };''')
 rep('  window.__showCur=showCur; showCur();',
-    '''  window.__showCur=showCur; showCur();
-  const getGps=manual=>{ if(!navigator.geolocation){ if(manual) err.textContent="Denne nettleseren kan ikke gi posisjon. Skriv adresse i stedet."; return; }
+    """  window.__showCur=showCur; showCur();
+  const useGps=()=>{ const sel=$("home"); sel.value="__gps"; sel.dispatchEvent(new Event("change")); showCur(); syncHome(); };
+  const getGps=manual=>{ if(!navigator.geolocation){ if(manual) err.textContent="Denne nettleseren kan ikke gi posisjon."; return; }
     if(manual) err.textContent="Finner posisjonen din …";
     navigator.geolocation.getCurrentPosition(p=>{ const v=[Math.round(p.coords.latitude*1e5)/1e5,Math.round(p.coords.longitude*1e5)/1e5];
-        if(!manual&&!(state.home==="__me")) return;
-        setLoc(v,"Min posisjon",false,false); store("kk-megps",true); savePrefs();
-        geoRev(v).then(g=>{ if(g&&meLoc&&meLoc[0]===v[0]&&meLoc[1]===v[1]){ meLabel="Min posisjon – nær "+g; store("kk-melabel",meLabel); savePrefs(); showCur(); syncHome(); } }); },
-      e=>{ if(manual) err.textContent = e&&e.code===1 ? "Posisjon er ikke tillatt for denne siden. Slå det på i telefonens innstillinger for nettleseren, eller skriv adresse." : "Fant ikke posisjonen din. Prøv igjen, eller skriv adresse."; },
-      {enableHighAccuracy:true,timeout:15000,maximumAge:120000}); };
-  gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
-  if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);''')
+        if(!manual&&state.home!=="__gps") return;
+        gpsLoc=v; store("kk-gpsloc",v); err.textContent=""; useGps(); if(manual) closeP();
+        geoRev(v).then(g=>{ if(g&&gpsLoc===v){ gpsLabel=g; store("kk-gpslabel",g); showCur(); } }); },
+      e=>{ if(manual) err.textContent = e&&e.code===1 ? "Posisjon er ikke tillatt for denne siden. Slå det på i telefonens innstillinger for nettleseren, eller bruk Hjem." : "Fant ikke posisjonen din. Prøv igjen, eller bruk Hjem."; },
+      {enableHighAccuracy:true,timeout:15000,maximumAge:60000}); };
+  gpsOpt.addEventListener("click",ev=>{ ev.stopPropagation(); if(gpsLoc){ useGps(); closeP(); getGps(false); } else getGps(true); });
+  if(state.home==="__gps") setTimeout(()=>getGps(false),300);""")
 # street search: fetch many pages (only street + municipality fields) so all matching streets show up
 rep('      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");',
     r'''      const tl=t.trim().toLowerCase(), hit=x=>{ const n=(x.street||"").toLowerCase(); return n.startsWith(tl)||n.split(/[\s-]+/).some(w=>w.startsWith(tl)); };
@@ -85,12 +110,7 @@ rep('    const g=await geo(t);',
     let g=await geo(clean(t)); if(g&&!g.length){ const m=clean(t).match(/^(\D+?\s\d+\s?[a-zA-Z]?)\b.*?\b(\d{4})\b/); if(m) g=await geo(m[1]+" "+m[2]); }""")
 rep(r'    if(t.length<3||/\d/.test(t)||parseLoc(t)) return;',
     '    if(/^\\D+\\s\\d+.*\\b\\d{4}\\b/.test(t)&&!parseLoc(t)){ tah=setTimeout(()=>{ if(inp.value.trim()===t) use(); },600); return; }\n    if(t.length<3||/\\d/.test(t)||parseLoc(t)) return;')
-# GPS label: keep the home button short
-rep('(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:"Min posisjon")', '(meLabel&&!parseLoc(meLabel)&&!meLabel.startsWith("Min posisjon")?meLabel.split(",")[0]:"Min posisjon")')
-# typing an address or coordinates turns automatic GPS off
-rep('  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return;',
-    '  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return; if(!ta) store("kk-megps",false);')
-rep('"Min adresse eller posisjon"', '"Eller skriv adresse"')
+rep('"Min adresse eller posisjon"', '"Sett hjemadresse"')
 rep('Avstand regnes i luftlinje fra posisjonen du har limt inn,', 'Avstand regnes i luftlinje fra posisjonen din eller adressen du har skrevet inn,')
 
 open(dst, "w", encoding="utf-8").write(s)
