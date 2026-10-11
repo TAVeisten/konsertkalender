@@ -385,6 +385,11 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
   gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
   if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);
   let busy=false;
+  const cap=w=>String(w||"").toLowerCase().replace(/(^|[\s-])\S/g,m=>m.toUpperCase());
+  const geoRaw=async(params)=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),8000);
+      const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?"+params+"&utkoordsys=4258",{signal:c.signal}); clearTimeout(tm);
+      if(!r.ok) return null; const j=await r.json(); return (j.adresser||[]).map(x=>({street:x.adressenavn||"",nr:Number(x.nummer)||0,bok:x.bokstav||"",kom:cap(x.kommunenavn),
+        a:x.adressetekst+", "+x.postnummer+" "+cap(x.poststed),la:x.representasjonspunkt&&x.representasjonspunkt.lat,lo:x.representasjonspunkt&&x.representasjonspunkt.lon})); }catch(e){ return null; } };
   const geo=async q=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),6000);
       const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?sok="+encodeURIComponent(q)+"&treffPerSide=10&utkoordsys=4258",{signal:c.signal}); clearTimeout(tm);
       if(!r.ok) return null; const j=await r.json(); return (j.adresser||[]).map(x=>({a:x.adressetekst+", "+x.postnummer+" "+(x.poststed||"").replace(/\S+/g,w=>w[0]+w.slice(1).toLowerCase()),la:x.representasjonspunkt&&x.representasjonspunkt.lat,lo:x.representasjonspunkt&&x.representasjonspunkt.lon})); }catch(e){ return null; } };
@@ -406,6 +411,24 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
     const showList=(list,approx)=>{ if(list.length===1){ setLoc([r5(list[0].la),r5(list[0].lo)],list[0].a,false,approx); return; }
       err.textContent=""; cands.append(el("p","pplab","Velg riktig adresse"));
       list.forEach(x=>{ const bt=el("button","popt pcity"); bt.type="button"; bt.append(el("span",null,x.a)); bt.addEventListener("click",ev=>{ ev.stopPropagation(); setLoc([r5(x.la),r5(x.lo)],x.a,false,approx); }); cands.appendChild(bt); }); };
+    if(!/\d/.test(t)){
+      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
+      if(rows&&!rows.length) rows=await geoRaw("sok="+encodeURIComponent(t.trim())+"&fuzzy=true&treffPerSide=500");
+      if(rows){ const seen={}, streets=[]; rows.forEach(x=>{ const k=x.street+"|"+x.kom; if(x.street&&!seen[k]){ seen[k]=1; streets.push(x); } });
+        streets.sort((a,b)=>(a.street+a.kom).localeCompare(b.street+b.kom,"nb"));
+        busy=false; go.disabled=false;
+        if(!streets.length){ err.textContent="Fant ingen gate som passer. Sjekk skrivemåten."; return; }
+        err.textContent=""; cands.append(el("p","pplab",streets.length>1?"Velg gate ("+streets.length+")":"Velg gate"));
+        streets.forEach(x=>{ const bt=el("button","popt pcity"); bt.type="button"; bt.append(el("span",null,x.street+", "+x.kom));
+          bt.addEventListener("click",async ev=>{ ev.stopPropagation(); cands.innerHTML=""; err.textContent="Henter adresser …";
+            const all=(await geoRaw("sok="+encodeURIComponent(x.street+" "+x.kom)+"&treffPerSide=1000"))||[];
+            const list=all.filter(y=>y.street===x.street&&y.kom===x.kom&&okNo(y.la,y.lo)).sort((a,b)=>a.nr-b.nr||a.bok.localeCompare(b.bok));
+            if(!list.length){ err.textContent="Fant ingen adresser i "+x.street+". Skriv med husnummer."; return; }
+            err.textContent=""; cands.append(el("p","pplab","Velg husnummer i "+x.street+", "+x.kom));
+            list.forEach(y=>{ const b2=el("button","popt pcity"); b2.type="button"; b2.append(el("span",null,y.a)); b2.addEventListener("click",e2=>{ e2.stopPropagation(); setLoc([r5(y.la),r5(y.lo)],y.a,false,false); }); cands.appendChild(b2); }); });
+          cands.appendChild(bt); });
+        return; }
+    }
     const g=await geo(t);
     if(g){ busy=false; go.disabled=false; const ok=g.filter(x=>okNo(x.la,x.lo)); if(ok.length){ showList(ok); return; } }
     const sample=await getSample();
