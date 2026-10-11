@@ -55,11 +55,11 @@ rep('  const geo=async q=>{',
         if(!r.ok) return null; const j=await r.json(); return Array.isArray(j.adresser)?j:null; }catch(e){ return null; } };
       let cut=false;
       const one=async(qq,split)=>{ const first=await pg(qq,0); if(!first) return null; let all=first.adresser;
-        const total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?10001:all.length);
-        if(total>10000&&split){ // too many to fetch: the API returns them alphabetically and stops at 10000, so ask once per next letter
+        const total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?10000:all.length);
+        if(total>=10000&&split){ // too many to fetch: the API returns them alphabetically and stops at 10000, so ask once per next letter
           const base=qq.replace(/\*$/,""), L="abcdefghijklmnopqrstuvwxyzæøå".split(""), subs=L.map(c=>base+c+"*").concat(/\s$/.test(base)?[]:L.map(c=>base+" "+c+"*"));
           const parts=await Promise.all(subs.map(x=>one(x,false))); all=[]; parts.forEach(p=>{ if(p) all=all.concat(p); }); return all; }
-        if(total>10000) return all; // a letter query that still matches too much (e.g. "Øvre ø*" also hits "Øvre"): first page is enough
+        if(total>=10000) return all; // a letter query that still matches too much (e.g. "Øvre ø*" also hits "Øvre"): first page is enough
         const n=Math.min(Math.ceil(total/1000),10); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(qq,i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
         return all; };
       const all=await one(q,true); if(!all) return null;
@@ -75,6 +75,7 @@ rep('        streets.sort((a,b)=>(a.street+a.kom).localeCompare(b.street+b.kom,"
             const rest=n.slice(i+tq.length), whole=!rest||/^[\s-]/.test(rest), word=(tq.split(/\s+/).pop()+rest).split(/[\s-]/)[0], comp=!whole&&SUF.test(word)&&word.length>tq.length;
             const v = i===0 ? (whole?0:comp?2:1) : (whole?3:4); if(v<best) best=v; } return best; };
         const hp=homePos(); streets.forEach(x=>{ x._t=tier(x.street); x._d=hp&&okNo(x.la,x.lo)?km(hp,[x.la,x.lo]):1e9; });
+        if(streets.some(x=>x._t===0)){ const keep=streets.filter(x=>x._t===0); streets.length=0; streets.push(...keep); } // whole word typed: skip longer names
         streets.sort((a,b)=>a._t-b._t||a.street.localeCompare(b.street,"nb")||a._d-b._d||a.kom.localeCompare(b.kom,"nb"));""")
 rep('        streets.forEach(x=>{ const bt=el("button","popt pcity");',
     '        let hOther=false; streets.forEach(x=>{ if(x._t>=3&&!hOther&&streets[0]._t<3){ hOther=true; cands.append(el("p","pplab","Andre gater med «"+t.trim()+"»")); } const bt=el("button","popt pcity");')
