@@ -37,11 +37,14 @@ rep('  window.__showCur=showCur; showCur();',
     if(manual) err.textContent="Finner posisjonen din …";
     navigator.geolocation.getCurrentPosition(p=>{ const v=[Math.round(p.coords.latitude*1e5)/1e5,Math.round(p.coords.longitude*1e5)/1e5];
         if(!manual&&!(state.home==="__me")) return;
-        setLoc(v,"Min posisjon",false,false); store("kk-megps",true); savePrefs(); },
+        setLoc(v,"Min posisjon",false,false); store("kk-megps",true); savePrefs();
+        geoRev(v).then(g=>{ if(g&&meLoc&&meLoc[0]===v[0]&&meLoc[1]===v[1]){ meLabel="Min posisjon – nær "+g; store("kk-melabel",meLabel); savePrefs(); showCur(); syncHome(); } }); },
       e=>{ if(manual) err.textContent = e&&e.code===1 ? "Posisjon er ikke tillatt for denne siden. Slå det på i telefonens innstillinger for nettleseren, eller skriv adresse." : "Fant ikke posisjonen din. Prøv igjen, eller skriv adresse."; },
       {enableHighAccuracy:true,timeout:15000,maximumAge:120000}); };
   gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
   if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);''')
+# GPS label: keep the home button short
+rep('(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:"Min posisjon")', '(meLabel&&!parseLoc(meLabel)&&!meLabel.startsWith("Min posisjon")?meLabel.split(",")[0]:"Min posisjon")')
 # typing an address or coordinates turns automatic GPS off
 rep('  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return;',
     '  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return; if(!ta) store("kk-megps",false);')

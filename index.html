@@ -341,7 +341,7 @@ const homeBtn=$("homeBtn"), homePanel=$("homePanel");
   });
   const none=opt("","✕ Ikke bruk hjemsted"); none.classList.add("pnone"); homePanel.appendChild(none);
 })();
-const syncHome=()=>{ if(window.__showCur) window.__showCur(); homeBtn.textContent=state.home==="__me"&&meLoc?"📍 "+(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:"Min posisjon"):state.home&&HOMES[state.home]?state.home:"Velg hjemsted";
+const syncHome=()=>{ if(window.__showCur) window.__showCur(); homeBtn.textContent=state.home==="__me"&&meLoc?"📍 "+(meLabel&&!parseLoc(meLabel)&&!meLabel.startsWith("Min posisjon")?meLabel.split(",")[0]:"Min posisjon"):state.home&&HOMES[state.home]?state.home:"Velg hjemsted";
   homePanel.querySelectorAll(".popt").forEach(b=>b.setAttribute("aria-current",String(b.dataset.home===(state.home||"")))); };
 homeBtn.addEventListener("click",e=>{ e.stopPropagation(); placePanel.hidden=true; homePanel.hidden=!homePanel.hidden; homeBtn.setAttribute("aria-expanded",String(!homePanel.hidden));
   if(!homePanel.hidden){ const cur=state.home&&state.home.indexOf(" – ")>0?state.home.split(" – ")[0]:null;
@@ -380,7 +380,8 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
     if(manual) err.textContent="Finner posisjonen din …";
     navigator.geolocation.getCurrentPosition(p=>{ const v=[Math.round(p.coords.latitude*1e5)/1e5,Math.round(p.coords.longitude*1e5)/1e5];
         if(!manual&&!(state.home==="__me")) return;
-        setLoc(v,"Min posisjon",false,false); store("kk-megps",true); savePrefs(); },
+        setLoc(v,"Min posisjon",false,false); store("kk-megps",true); savePrefs();
+        geoRev(v).then(g=>{ if(g&&meLoc&&meLoc[0]===v[0]&&meLoc[1]===v[1]){ meLabel="Min posisjon – nær "+g; store("kk-melabel",meLabel); savePrefs(); showCur(); syncHome(); } }); },
       e=>{ if(manual) err.textContent = e&&e.code===1 ? "Posisjon er ikke tillatt for denne siden. Slå det på i telefonens innstillinger for nettleseren, eller skriv adresse." : "Fant ikke posisjonen din. Prøv igjen, eller skriv adresse."; },
       {enableHighAccuracy:true,timeout:15000,maximumAge:120000}); };
   gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
