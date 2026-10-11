@@ -392,6 +392,14 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
       const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?"+params+"&utkoordsys=4258",{signal:c.signal}); clearTimeout(tm);
       if(!r.ok) return null; const j=await r.json(); const out=(j.adresser||[]).map(x=>({street:x.adressenavn||"",nr:Number(x.nummer)||0,bok:x.bokstav||"",kom:cap(x.kommunenavn),
         a:x.adressetekst+", "+x.postnummer+" "+cap(x.poststed),la:x.representasjonspunkt&&x.representasjonspunkt.lat,lo:x.representasjonspunkt&&x.representasjonspunkt.lon})); out.total=(j.metadata&&j.metadata.totaltAntallTreff)||out.length; return out; }catch(e){ return null; } };
+  const streetsAll=async q=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,metadata&utkoordsys=4258";
+      const pg=async n=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),10000);
+        const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?sok="+encodeURIComponent(q)+"&treffPerSide=1000&side="+n+F,{signal:c.signal}); clearTimeout(tm);
+        if(!r.ok) return null; const j=await r.json(); return Array.isArray(j.adresser)?j:null; }catch(e){ return null; } };
+      const first=await pg(0); if(!first) return null; let all=first.adresser;
+      let total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?8000:all.length);
+      const n=Math.min(Math.ceil(total/1000),8); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
+      const out=all.map(x=>({street:x.adressenavn||"",kom:cap(x.kommunenavn)})); out.total=total; return out; };
   const geo=async q=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),6000);
       const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?sok="+encodeURIComponent(q)+"&treffPerSide=10&utkoordsys=4258",{signal:c.signal}); clearTimeout(tm);
       if(!r.ok) return null; const j=await r.json(); return (j.adresser||[]).map(x=>({a:x.adressetekst+", "+x.postnummer+" "+(x.poststed||"").replace(/\S+/g,w=>w[0]+w.slice(1).toLowerCase()),la:x.representasjonspunkt&&x.representasjonspunkt.lat,lo:x.representasjonspunkt&&x.representasjonspunkt.lon})); }catch(e){ return null; } };
@@ -414,7 +422,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
       err.textContent=""; cands.append(el("p","pplab","Velg riktig adresse"));
       list.forEach(x=>{ const bt=el("button","popt pcity"); bt.type="button"; bt.append(el("span",null,x.a)); bt.addEventListener("click",ev=>{ ev.stopPropagation(); setLoc([r5(x.la),r5(x.lo)],x.a,false,approx); }); cands.appendChild(bt); }); };
     if(!/\d/.test(t)){
-      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
+      let rows=await streetsAll(t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
       if(rows&&!rows.length) rows=await geoRaw("sok="+encodeURIComponent(t.trim())+"&fuzzy=true&treffPerSide=500");
       if(rows){ const seen={}, streets=[]; rows.forEach(x=>{ const k=x.street+"|"+x.kom; if(x.street&&!seen[k]){ seen[k]=1; streets.push(x); } });
         streets.sort((a,b)=>(a.street+a.kom).localeCompare(b.street+b.kom,"nb"));
@@ -426,7 +434,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
             const all=(await geoRaw("sok="+encodeURIComponent(x.street+" "+x.kom)+"&treffPerSide=1000"))||[];
             const list=all.filter(y=>y.street===x.street&&y.kom===x.kom&&okNo(y.la,y.lo)).sort((a,b)=>a.nr-b.nr||a.bok.localeCompare(b.bok));
             if(!list.length){ err.textContent="Fant ingen adresser i "+x.street+". Skriv med husnummer."; return; }
-            err.textContent=""; cands.append(el("p","pplab","Velg husnummer i "+x.street+", "+x.kom));
+            err.textContent=""; cands.append(el("p","pplab","Velg husnummer i "+x.street+", "+x.kom)); homePanel.scrollTop+=cands.getBoundingClientRect().top-homePanel.getBoundingClientRect().top-8;
             list.forEach(y=>{ const b2=el("button","popt pcity"); b2.type="button"; b2.append(el("span",null,y.a)); b2.addEventListener("click",e2=>{ e2.stopPropagation(); setLoc([r5(y.la),r5(y.lo)],y.a,false,false); }); cands.appendChild(b2); }); });
           cands.appendChild(bt); });
         return; }

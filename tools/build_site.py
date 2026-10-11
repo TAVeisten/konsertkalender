@@ -43,6 +43,22 @@ rep('  window.__showCur=showCur; showCur();',
       {enableHighAccuracy:true,timeout:15000,maximumAge:120000}); };
   gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
   if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);''')
+# street search: fetch many pages (only street + municipality fields) so all matching streets show up
+rep('      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");',
+    '      let rows=await streetsAll(t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");')
+rep('  const geo=async q=>{',
+    """  const streetsAll=async q=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,metadata&utkoordsys=4258";
+      const pg=async n=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),10000);
+        const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?sok="+encodeURIComponent(q)+"&treffPerSide=1000&side="+n+F,{signal:c.signal}); clearTimeout(tm);
+        if(!r.ok) return null; const j=await r.json(); return Array.isArray(j.adresser)?j:null; }catch(e){ return null; } };
+      const first=await pg(0); if(!first) return null; let all=first.adresser;
+      let total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?8000:all.length);
+      const n=Math.min(Math.ceil(total/1000),8); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
+      const out=all.map(x=>({street:x.adressenavn||"",kom:cap(x.kommunenavn)})); out.total=total; return out; };
+  const geo=async q=>{""")
+# after showing a new list, scroll the panel so the list starts at the top (not left down in the city list)
+rep('            err.textContent=""; cands.append(el("p","pplab","Velg husnummer i "+x.street+", "+x.kom));',
+    '            err.textContent=""; cands.append(el("p","pplab","Velg husnummer i "+x.street+", "+x.kom)); homePanel.scrollTop+=cands.getBoundingClientRect().top-homePanel.getBoundingClientRect().top-8;')
 # GPS label: keep the home button short
 rep('(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:"Min posisjon")', '(meLabel&&!parseLoc(meLabel)&&!meLabel.startsWith("Min posisjon")?meLabel.split(",")[0]:"Min posisjon")')
 # typing an address or coordinates turns automatic GPS off
