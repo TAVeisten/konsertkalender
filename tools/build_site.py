@@ -45,15 +45,17 @@ rep('  window.__showCur=showCur; showCur();',
   if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);''')
 # street search: fetch many pages (only street + municipality fields) so all matching streets show up
 rep('      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");',
-    '      let rows=await streetsAll(t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");')
+    r'''      const tl=t.trim().toLowerCase(), hit=x=>{ const n=(x.street||"").toLowerCase(); return n.startsWith(tl)||n.split(/[\s-]+/).some(w=>w.startsWith(tl)); };
+      let rows=await streetsAll("adressenavn",t.trim()+"*"); if(!rows||!rows.some(hit)) rows=await streetsAll("sok",t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
+      if(rows&&rows.some(hit)){ const tot=rows.total; rows=rows.filter(hit); rows.total=tot; }''')
 rep('  const geo=async q=>{',
-    """  const streetsAll=async q=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,metadata&utkoordsys=4258";
+    """  const streetsAll=async(fld,q)=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,metadata&utkoordsys=4258";
       const pg=async n=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),10000);
-        const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?sok="+encodeURIComponent(q)+"&treffPerSide=1000&side="+n+F,{signal:c.signal}); clearTimeout(tm);
+        const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?"+fld+"="+encodeURIComponent(q)+"&treffPerSide=1000&side="+n+F,{signal:c.signal}); clearTimeout(tm);
         if(!r.ok) return null; const j=await r.json(); return Array.isArray(j.adresser)?j:null; }catch(e){ return null; } };
       const first=await pg(0); if(!first) return null; let all=first.adresser;
-      let total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?8000:all.length);
-      const n=Math.min(Math.ceil(total/1000),8); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
+      let total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?10000:all.length);
+      const n=Math.min(Math.ceil(total/1000),10); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
       const out=all.map(x=>({street:x.adressenavn||"",kom:cap(x.kommunenavn)})); out.total=total; return out; };
   const geo=async q=>{""")
 # after showing a new list, scroll the panel so the list starts at the top (not left down in the city list)
