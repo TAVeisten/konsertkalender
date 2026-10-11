@@ -365,6 +365,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
   const gpsB=el("button","ppbtn ppmain","📍 Finn min posisjon"); gpsB.type="button";
   const cur=el("p","ppcur","");
   const err=el("p","pperr",""); err.setAttribute("role","status");
+  const webHint=el("p","pphelp"); webHint.id="webHint"; webHint.innerHTML='Nøyaktig adressesøk og «Finn min posisjon» virker bare på nettsiden: <a href="https://taveisten.github.io/konsertkalender/" target="_blank" rel="noopener">taveisten.github.io/konsertkalender</a>';
   const cands=el("div","ppcands");
   box.append(meOpt,gpsB,lab,row,cands,cur,err);
   homePanel.insertBefore(box,homePanel.firstChild);

@@ -30,7 +30,7 @@ rep('<meta name=viewport content="width=device-width,initial-scale=1,viewport-fi
 rep('  const go=el("button","ppgo","Bruk"); go.type="button"; row.append(inp,go);',
     '  const go=el("button","ppgo","Bruk"); go.type="button"; row.append(inp,go);\n'
     '  const gpsB=el("button","ppbtn ppmain","📍 Finn min posisjon"); gpsB.type="button";')
-rep('box.append(meOpt,lab,row,cands,cur,err);', 'box.append(meOpt,gpsB,lab,row,cands,cur,err);')
+rep('box.append(meOpt,webHint,lab,row,cands,cur,err);', 'box.append(meOpt,gpsB,lab,row,cands,cur,err);')
 rep('  window.__showCur=showCur; showCur();',
     '''  window.__showCur=showCur; showCur();
   const getGps=manual=>{ if(!navigator.geolocation){ if(manual) err.textContent="Denne nettleseren kan ikke gi posisjon. Skriv adresse i stedet."; return; }
