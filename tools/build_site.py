@@ -49,14 +49,21 @@ rep('      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treff
       let rows=await streetsAll("adressenavn",t.trim()+"*"); if(!rows||!rows.some(hit)) rows=await streetsAll("sok",t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
       if(rows&&rows.some(hit)){ const tot=rows.total; rows=rows.filter(hit); rows.total=tot; }''')
 rep('  const geo=async q=>{',
-    """  const streetsAll=async(fld,q)=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,adresser.representasjonspunkt,metadata&utkoordsys=4258";
-      const pg=async n=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),10000);
-        const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?"+fld+"="+encodeURIComponent(q)+"&treffPerSide=1000&side="+n+F,{signal:c.signal}); clearTimeout(tm);
+    r"""  const streetsAll=async(fld,q)=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,adresser.representasjonspunkt,metadata&utkoordsys=4258";
+      const pg=async(qq,n)=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),12000);
+        const r=await fetch("https://ws.geonorge.no/adresser/v1/sok?"+fld+"="+encodeURIComponent(qq)+"&treffPerSide=1000&side="+n+F,{signal:c.signal}); clearTimeout(tm);
         if(!r.ok) return null; const j=await r.json(); return Array.isArray(j.adresser)?j:null; }catch(e){ return null; } };
-      const first=await pg(0); if(!first) return null; let all=first.adresser;
-      let total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?10000:all.length);
-      const n=Math.min(Math.ceil(total/1000),10); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
-      const out=all.map(x=>({street:x.adressenavn||"",kom:cap(x.kommunenavn),la:x.representasjonspunkt&&x.representasjonspunkt.lat,lo:x.representasjonspunkt&&x.representasjonspunkt.lon})); out.total=total; return out; };
+      let cut=false;
+      const one=async(qq,split)=>{ const first=await pg(qq,0); if(!first) return null; let all=first.adresser;
+        const total=(first.metadata&&first.metadata.totaltAntallTreff)||(all.length>=1000?10001:all.length);
+        if(total>10000&&split){ // too many to fetch: the API returns them alphabetically and stops at 10000, so ask once per next letter
+          const base=qq.replace(/\*$/,""), L="abcdefghijklmnopqrstuvwxyzæøå".split(""), subs=L.map(c=>base+c+"*").concat(/\s$/.test(base)?[]:L.map(c=>base+" "+c+"*"));
+          const parts=await Promise.all(subs.map(x=>one(x,false))); all=[]; parts.forEach(p=>{ if(p) all=all.concat(p); }); return all; }
+        if(total>10000) return all; // a letter query that still matches too much (e.g. "Øvre ø*" also hits "Øvre"): first page is enough
+        const n=Math.min(Math.ceil(total/1000),10); if(n>1){ const more=await Promise.all(Array.from({length:n-1},(_,i)=>pg(qq,i+1))); more.forEach(m=>{ if(m) all=all.concat(m.adresser); }); }
+        return all; };
+      const all=await one(q,true); if(!all) return null;
+      const out=all.map(x=>({street:x.adressenavn||"",kom:cap(x.kommunenavn),la:x.representasjonspunkt&&x.representasjonspunkt.lat,lo:x.representasjonspunkt&&x.representasjonspunkt.lon})); out.total=cut?out.length+1:out.length; return out; };
   const geo=async q=>{""")
 # after showing a new list, scroll the panel so the list starts at the top (not left down in the city list)
 rep('            err.textContent=""; cands.append(el("p","pplab","Velg husnummer i "+x.street+", "+x.kom));',
@@ -71,6 +78,12 @@ rep('        streets.sort((a,b)=>(a.street+a.kom).localeCompare(b.street+b.kom,"
         streets.sort((a,b)=>a._t-b._t||a.street.localeCompare(b.street,"nb")||a._d-b._d||a.kom.localeCompare(b.kom,"nb"));""")
 rep('        streets.forEach(x=>{ const bt=el("button","popt pcity");',
     '        let hOther=false; streets.forEach(x=>{ if(x._t>=3&&!hOther&&streets[0]._t<3){ hOther=true; cands.append(el("p","pplab","Andre gater med «"+t.trim()+"»")); } const bt=el("button","popt pcity");')
+# full addresses (also from the phone's autofill): drop county/country words, retry with street + number + postcode
+rep('    const g=await geo(t);',
+    r"""    const clean=x=>x.replace(/\n/g,", ").replace(/\b(norge|norway|noreg|buskerud|viken|akershus|østfold|vestfold|telemark|agder|rogaland|vestland|hordaland|møre og romsdal|trøndelag|nordland|troms|finnmark|innlandet|oppland|hedmark)\b/gi," ").replace(/\s+/g," ").replace(/[ ,]+$/,"").trim();
+    let g=await geo(clean(t)); if(g&&!g.length){ const m=clean(t).match(/^(\D+?\s\d+\s?[a-zA-Z]?)\b.*?\b(\d{4})\b/); if(m) g=await geo(m[1]+" "+m[2]); }""")
+rep(r'    if(t.length<3||/\d/.test(t)||parseLoc(t)) return;',
+    '    if(/^\\D+\\s\\d+.*\\b\\d{4}\\b/.test(t)&&!parseLoc(t)){ tah=setTimeout(()=>{ if(inp.value.trim()===t) use(); },600); return; }\n    if(t.length<3||/\\d/.test(t)||parseLoc(t)) return;')
 # GPS label: keep the home button short
 rep('(meLabel&&!parseLoc(meLabel)?meLabel.split(",")[0]:"Min posisjon")', '(meLabel&&!parseLoc(meLabel)&&!meLabel.startsWith("Min posisjon")?meLabel.split(",")[0]:"Min posisjon")')
 # typing an address or coordinates turns automatic GPS off
