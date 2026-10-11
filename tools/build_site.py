@@ -43,8 +43,8 @@ rep('  window.__showCur=showCur; showCur();',
   gpsB.addEventListener("click",ev=>{ ev.stopPropagation(); getGps(true); });
   if(load("kk-megps",false) && state.home==="__me") setTimeout(()=>getGps(false),300);''')
 # typing an address or coordinates turns automatic GPS off
-rep('  const use=async()=>{ const t=inp.value.trim(); if(!t||busy) return;',
-    '  const use=async()=>{ const t=inp.value.trim(); if(!t||busy) return; store("kk-megps",false);')
+rep('  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return;',
+    '  const use=async(ta)=>{ ta=ta===true; const t=inp.value.trim(); if(!t||busy) return; if(!ta) store("kk-megps",false);')
 rep('"Min adresse eller posisjon"', '"Eller skriv adresse"')
 rep('Avstand regnes i luftlinje fra posisjonen du har limt inn,', 'Avstand regnes i luftlinje fra posisjonen din eller adressen du har skrevet inn,')
 
