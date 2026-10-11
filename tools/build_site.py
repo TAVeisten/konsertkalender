@@ -47,7 +47,7 @@ rep('  window.__showCur=showCur; showCur();',
 rep('      let rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");',
     r'''      const tl=t.trim().toLowerCase(), hit=x=>{ const n=(x.street||"").toLowerCase(); return n.startsWith(tl)||n.split(/[\s-]+/).some(w=>w.startsWith(tl)); };
       let rows=await streetsAll("adressenavn",t.trim()+"*"); if(!rows||!rows.some(hit)) rows=await streetsAll("sok",t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
-      if(rows&&rows.some(hit)){ const tot=rows.total; rows=rows.filter(hit); rows.total=tot; }''')
+      if(rows&&rows.some(hit)){ const more=rows.total>rows.length; rows=rows.filter(hit); rows.total=rows.length+(more?1:0); }''')
 rep('  const geo=async q=>{',
     r"""  const streetsAll=async(fld,q)=>{ const F="&filtrer=adresser.adressenavn,adresser.kommunenavn,adresser.representasjonspunkt,metadata&utkoordsys=4258";
       const pg=async(qq,n)=>{ try{ const c=new AbortController(); const tm=setTimeout(()=>c.abort(),12000);

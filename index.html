@@ -431,7 +431,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
     if(!/\d/.test(t)){
       const tl=t.trim().toLowerCase(), hit=x=>{ const n=(x.street||"").toLowerCase(); return n.startsWith(tl)||n.split(/[\s-]+/).some(w=>w.startsWith(tl)); };
       let rows=await streetsAll("adressenavn",t.trim()+"*"); if(!rows||!rows.some(hit)) rows=await streetsAll("sok",t.trim()+"*"); if(!rows) rows=await geoRaw("sok="+encodeURIComponent(t.trim()+"*")+"&treffPerSide=500");
-      if(rows&&rows.some(hit)){ const tot=rows.total; rows=rows.filter(hit); rows.total=tot; }
+      if(rows&&rows.some(hit)){ const more=rows.total>rows.length; rows=rows.filter(hit); rows.total=rows.length+(more?1:0); }
       if(rows&&!rows.length) rows=await geoRaw("sok="+encodeURIComponent(t.trim())+"&fuzzy=true&treffPerSide=500");
       if(rows){ const seen={}, streets=[]; rows.forEach(x=>{ const k=x.street+"|"+x.kom; if(x.street&&!seen[k]){ seen[k]=1; streets.push(x); } });
         const tq=t.trim().toLowerCase(), SUF=/(veien|vegen|veg|vei|gata|gaten|gate|bakken|bakke|stien|sti|svingen|lia|plassen|plass|alle|allé|tunet|toppen|haugen|åsen|kroken|brinken|stredet|smauet|grenda|jordet|ringen|kollen|lunden|myra|enga|engen|løkka|kaia|kaien|brygga|bryggen|torget|torg|veita|stranda|strand|parken|park|hagen|dalen|berget|vika|tråkket|marka|lykkja|svea)$/;
