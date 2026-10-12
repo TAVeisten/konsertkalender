@@ -753,7 +753,7 @@ render();
   const upd=()=>{ const b=cnt.querySelector("b"); const has=q.value.trim()!==""; hit.textContent=has&&b?b.textContent+" treff":""; q.classList.toggle("hashits",has); };
   new MutationObserver(upd).observe(cnt,{childList:true,subtree:true,characterData:true}); q.addEventListener("input",()=>setTimeout(upd,0)); upd();
   // when the search field is tapped on a phone, slide it to the top so filters, count and first hits stay above the keyboard
-  q.addEventListener("focus",()=>{ if(innerWidth>700) return; document.body.classList.add("qfocus");
+  q.addEventListener("focus",()=>{ if(innerWidth>700) return; let inFrame=true; try{ inFrame=window.self!==window.top; }catch(e){} if(inFrame) return; // inside the Claude app the page is moved twice, so only slide up on the website document.body.classList.add("qfocus");
     setTimeout(()=>{ if(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs"))) return;
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
