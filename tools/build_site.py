@@ -34,6 +34,9 @@ rep('</body>', '''<script>(function(){ const h=document.querySelector(".mast h1"
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(fit); addEventListener("resize",fit); })();</script></body>''')
 # safety: a too-wide child can never push the page sideways
 rep('.mast{display:grid;gap:6px;', '.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;')
+# the star tip under the title: short, bold, with a red star like the button on each concert
+rep(' Stjernemerk det du vil få med deg.</p>', ' <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>')
+rep('.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}', '.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}.startip{color:var(--ink);font-weight:700;white-space:nowrap}.startip span{color:var(--accent);font-size:1.15em}')
 # --- Hjem + Min posisjon as two separate places ---
 # meLoc/meLabel = Hjem (typed address, home value "__me"); gpsLoc/gpsLabel = Min posisjon (phone GPS, home value "__gps")
 rep('let meLoc=load("kk-meloc",null), meLabel=load("kk-melabel",""), meApprox=load("kk-meapprox",false);',
