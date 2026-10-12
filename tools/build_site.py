@@ -47,9 +47,8 @@ rep('</body>', '''<script>(function(){ const h=document.querySelector(".mast h1"
 
 # safety: a too-wide child can never push the page sideways
 rep('.mast{display:grid;gap:6px;', '.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;')
-# the star tip under the title: short, bold, with a red star like the button on each concert
-rep(' Stjernemerk det du vil få med deg.</p>', ' <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>')
-rep('.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}', '.sub{color:var(--muted);margin:4px 0 0;max-width:60ch}.sub{color:var(--ink)}.qhits{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--accent);pointer-events:none;white-space:nowrap}#q.hashits{padding-right:92px}body.qfocus #out{min-height:100vh}.startip{color:var(--ink);font-weight:700;white-space:nowrap}.startip span{color:var(--accent);font-size:1.15em}')
+# search-field hit count + slide-up (the star tip and dark intro text now live in the artifact itself)
+rep('.startip span{color:var(--accent);font-size:1.15em}', '.startip span{color:var(--accent);font-size:1.15em}.qhits{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--accent);pointer-events:none;white-space:nowrap}#q.hashits{padding-right:92px}body.qfocus #out{min-height:100vh}')
 # --- Hjem + Min posisjon as two separate places ---
 # meLoc/meLabel = Hjem (typed address, home value "__me"); gpsLoc/gpsLabel = Min posisjon (phone GPS, home value "__gps")
 rep('let meLoc=load("kk-meloc",null), meLabel=load("kk-melabel",""), meApprox=load("kk-meapprox",false);',
