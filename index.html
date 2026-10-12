@@ -80,6 +80,16 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
 .chip.fsw[aria-pressed="true"] .sw{background:var(--accent)}
 .chip.fsw[aria-pressed="true"] .sw::after{transform:translateX(12px)}
 .chip.fsw .st{font-size:11px;color:var(--muted);font-weight:600}
+header.mast{position:relative}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px;margin-top:-6px}
+.gear{position:relative;flex:0 0 auto;margin-right:-6px;width:40px;height:40px;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.gear:hover,.gear[aria-expanded="true"]{background:var(--chip);color:var(--ink)}
+.gear svg{width:22px;height:22px}
+.gear.dot::after{content:"";position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+.gearpanel{top:40px;left:auto;right:-6px;min-width:0;width:min(340px,calc(100vw - 32px));padding:14px 14px 12px;display:grid;gap:10px}
+.gearpanel h2{margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gearpanel .chip.fsw{justify-self:start;margin:0;font-size:14px;padding:8px 14px 8px 8px}
+.gearpanel p{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
 .meta .festtag{font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
 .chip.pin{background:var(--soft);color:var(--ink);border-color:var(--accent)}
 .tabs{display:flex;border-bottom:1px solid var(--line);gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -170,7 +180,9 @@ footer{margin-top:36px;font-size:12px;color:var(--muted);border-top:1px solid va
 
 <div class="wrap">
   <header class="mast">
-    <div class="eyebrow">Hele Norge · alle sjangre</div>
+    <div class="toprow"><div class="eyebrow">Hele Norge · alle sjangre</div>
+    <button id="gear" class="gear" type="button" aria-label="Innstillinger" aria-haspopup="true" aria-expanded="false" title="Innstillinger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
+    <div id="gearPanel" class="panel gearpanel" hidden><h2>Innstillinger</h2><p>Når denne er på, vises hver artist som spiller på en festival som en egen konsert i listen, på dagen de spiller. Slå den av for å se bare vanlige konserter. Festivalene finner du alltid under Festivaler.</p></div>
     <h1>Konsert<span>kalender</span></h1>
     <p class="sub">Kommende konserter med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>
     <div class="updated">Sist oppdatert <b id="upd">mandag 12.10.2026 kl. 13.56</b></div>
@@ -287,7 +299,11 @@ const whenEl=$("when");
 [["all","Alle datoer"],["today","I kveld"],["weekend","Denne helgen"],["week","Neste 7 dager"],["30","Neste 30 dager"],["custom","Velg datoer"]].forEach(([k,l])=>{
   const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=l; b.dataset.k=k; whenEl.appendChild(b); });
 const favChip=document.createElement("button"); favChip.type="button"; favChip.className="chip fav"; favChip.textContent="★ Mine"; favChip.dataset.k="__fav"; whenEl.appendChild(favChip);
-const festChip=document.createElement("button"); festChip.type="button"; festChip.className="chip fsw"; festChip.innerHTML='<span class="sw" aria-hidden="true"></span>Festivalartister <span class="st"></span>'; festChip.dataset.k="__fest"; festChip.title="Vis eller skjul artister som spiller på festivaler"; whenEl.prepend(festChip);
+const festChip=document.createElement("button"); festChip.type="button"; festChip.className="chip fsw"; festChip.innerHTML='<span class="sw" aria-hidden="true"></span>Festivalartister <span class="st"></span>'; festChip.dataset.k="__fest"; festChip.title="Vis eller skjul artister som spiller på festivaler"; { const gp=$("gearPanel"); gp.insertBefore(festChip,gp.querySelector("p")); }
+festChip.addEventListener("click",e=>{ e.stopPropagation(); state.showFest=!state.showFest; store("kk-showfest",state.showFest); render(); });
+{ const gear=$("gear"), gp=$("gearPanel"), closeG=()=>{ gp.hidden=true; gear.setAttribute("aria-expanded","false"); };
+  gear.addEventListener("click",e=>{ e.stopPropagation(); gp.hidden=!gp.hidden; gear.setAttribute("aria-expanded",String(!gp.hidden)); });
+  gp.addEventListener("click",e=>e.stopPropagation()); document.addEventListener("click",closeG); document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeG(); }); }
 whenEl.addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return;
   if(b.dataset.k==="__fav") state.onlyFav=!state.onlyFav; else if(b.dataset.k==="__fest"){ state.showFest=!state.showFest; store("kk-showfest",state.showFest); } else state.when=b.dataset.k; render(); });
 $("from").addEventListener("change",e=>{state.from=e.target.value;render();});
@@ -664,7 +680,7 @@ function render(){
   placePanel.querySelectorAll(".popt").forEach(b=>b.setAttribute("aria-current",String(b.dataset.place===state.place)));
   syncHome();
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.view===state.view)));
-  festChip.querySelector(".st").textContent=state.showFest?"PÅ":"AV";
+  festChip.querySelector(".st").textContent=state.showFest?"PÅ":"AV"; festChip.setAttribute("aria-pressed",String(state.showFest)); $("gear").classList.toggle("dot",!state.showFest); $("gear").title=state.showFest?"Innstillinger":"Innstillinger – festivalartister er skjult";
   [...whenEl.children].forEach(b=>b.setAttribute("aria-pressed", b.dataset.k==="__fav"?String(state.onlyFav):b.dataset.k==="__fest"?String(state.showFest):String(b.dataset.k===state.when)));
   $("dates").hidden = state.when!=="custom";
   whenEl.style.display = state.view==="cal" ? "none" : "";
