@@ -26,29 +26,8 @@ rep('<meta name=viewport content="width=device-width,initial-scale=1,viewport-fi
     '<meta name="theme-color" content="#D23347"><meta name="apple-mobile-web-app-capable" content="yes">'
     '<meta name="apple-mobile-web-app-title" content="Konserter"><meta name="mobile-web-app-capable" content="yes">')
 
-# title keeps its normal size, but shrinks if it would be wider than the screen (measured after the font has loaded)
-rep('</body>', '''<script>(function(){ const h=document.querySelector(".mast h1"); if(!h) return;
-  const fit=()=>{ h.style.fontSize=""; h.style.whiteSpace="nowrap"; const r=document.createRange(); r.selectNodeContents(h);
-    const tw=r.getBoundingClientRect().width, w=h.clientWidth, fs=parseFloat(getComputedStyle(h).fontSize);
-    h.style.whiteSpace=""; if(tw>w&&w>0) h.style.fontSize=(fs*w/tw*0.99)+"px"; };
-  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(fit); addEventListener("resize",fit); })();
-(function(){ const q=document.getElementById("q"), cnt=document.getElementById("count"), bar=document.querySelector(".bar"); if(!q||!cnt) return;
-  // number of hits shown inside the search field while there is text in it
-  const row=q.parentElement; row.style.position="relative";
-  const hit=document.createElement("span"); hit.className="qhits"; hit.setAttribute("aria-live","polite"); row.appendChild(hit);
-  const upd=()=>{ const b=cnt.querySelector("b"); const has=q.value.trim()!==""; hit.textContent=has&&b?b.textContent+" treff":""; q.classList.toggle("hashits",has); };
-  new MutationObserver(upd).observe(cnt,{childList:true,subtree:true,characterData:true}); q.addEventListener("input",()=>setTimeout(upd,0)); upd();
-  // when the search field is tapped on a phone, slide it to the top so filters, count and first hits stay above the keyboard
-  q.addEventListener("focus",()=>{ if(innerWidth>700) return; document.body.classList.add("qfocus");
-    setTimeout(()=>{ if(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs"))) return;
-      const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
-  q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
-})();</script></body>''')
 
-# safety: a too-wide child can never push the page sideways
-rep('.mast{display:grid;gap:6px;', '.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;')
-# search-field hit count + slide-up (the star tip and dark intro text now live in the artifact itself)
-rep('.startip span{color:var(--accent);font-size:1.15em}', '.startip span{color:var(--accent);font-size:1.15em}.qhits{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--accent);pointer-events:none;white-space:nowrap}#q.hashits{padding-right:92px}body.qfocus #out{min-height:100vh}')
+
 # --- Hjem + Min posisjon as two separate places ---
 # meLoc/meLabel = Hjem (typed address, home value "__me"); gpsLoc/gpsLabel = Min posisjon (phone GPS, home value "__gps")
 rep('let meLoc=load("kk-meloc",null), meLabel=load("kk-melabel",""), meApprox=load("kk-meapprox",false);',
