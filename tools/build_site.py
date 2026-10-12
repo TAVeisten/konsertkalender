@@ -112,5 +112,15 @@ rep(r'    if(t.length<3||/\d/.test(t)||parseLoc(t)) return;',
 rep('"Min adresse eller posisjon"', '"Sett hjemadresse"')
 rep('Avstand regnes i luftlinje fra posisjonen du har limt inn,', 'Avstand regnes i luftlinje fra posisjonen din eller adressen du har skrevet inn,')
 
+# Home-screen shortcuts (iPhone/iPad) keep showing an old copy. Stamp each build and let the page
+# check for a newer build when it opens or comes back to the foreground, then reload itself.
+import hashlib
+build = hashlib.sha1(s.encode("utf-8")).hexdigest()[:12]
+rep('</body>', '''<script>(function(){ const BUILD="%s"; let busy=false;
+  const check=async()=>{ if(busy) return; busy=true; try{
+      const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
+      if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
+  setTimeout(check,1500); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") check(); });
+})();</script></body>''' % build)
 open(dst, "w", encoding="utf-8").write(s)
 print("build_site: wrote", dst, len(s), "bytes")

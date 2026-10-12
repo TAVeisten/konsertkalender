@@ -786,4 +786,9 @@ render();
     setTimeout(()=>{ if(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs"))) return;
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
+})();</script><script>(function(){ const BUILD="e62b6bcb21d9"; let busy=false;
+  const check=async()=>{ if(busy) return; busy=true; try{
+      const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
+      if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
+  setTimeout(check,1500); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") check(); });
 })();</script></body></html>
