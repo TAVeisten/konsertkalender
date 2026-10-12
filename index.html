@@ -755,8 +755,8 @@ render();
   const upd=()=>{ const b=cnt.querySelector("b"); const has=q.value.trim()!==""; hit.textContent=has&&b?b.textContent+" treff":""; q.classList.toggle("hashits",has); };
   new MutationObserver(upd).observe(cnt,{childList:true,subtree:true,characterData:true}); q.addEventListener("input",()=>setTimeout(upd,0)); upd();
   // when the search field is tapped on a phone, slide it to the top so filters, count and first hits stay above the keyboard
-  q.addEventListener("focus",()=>{ if(innerWidth>700) return; let inFrame=true; try{ inFrame=window.self!==window.top; }catch(e){} // inside the Claude app: move it at once, before the keyboard opens (a late move there ends up too far up)
-    if(inFrame){ const t0=q.getBoundingClientRect().top; if(t0>90&&!(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs")))) window.scrollTo(0,scrollY+t0-12); document.body.classList.add("qfocus"); return; } document.body.classList.add("qfocus");
+  q.addEventListener("focus",()=>{ if(innerWidth>700) return; let inFrame=true; try{ inFrame=window.self!==window.top; }catch(e){} // inside the Claude app: move it at once, before the keyboard opens; the app then moves it up a bit more by itself, so stop short by the height of the search field and chips
+    if(inFrame){ const t0=q.getBoundingClientRect().top; if(t0>90&&!(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs")))) { const pl=document.getElementById("placeLbl"), extra=pl?Math.max(0,pl.getBoundingClientRect().top-t0):0; window.scrollTo(0,scrollY+t0-12-extra); } document.body.classList.add("qfocus"); return; } document.body.classList.add("qfocus");
     setTimeout(()=>{ if(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs"))) return;
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
