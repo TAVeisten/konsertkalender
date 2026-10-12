@@ -742,5 +742,5 @@ render();
 <script>(function(){ const h=document.querySelector(".mast h1"); if(!h) return;
   const fit=()=>{ h.style.fontSize=""; h.style.whiteSpace="nowrap"; const r=document.createRange(); r.selectNodeContents(h);
     const tw=r.getBoundingClientRect().width, w=h.clientWidth, fs=parseFloat(getComputedStyle(h).fontSize);
-    h.style.whiteSpace=""; if(tw>0&&w>0) h.style.fontSize=Math.min(84,fs*w/tw*0.99)+"px"; };
+    h.style.whiteSpace=""; if(tw>w&&w>0) h.style.fontSize=(fs*w/tw*0.99)+"px"; };
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(fit); addEventListener("resize",fit); })();</script></body></html>

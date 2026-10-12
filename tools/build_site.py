@@ -26,11 +26,11 @@ rep('<meta name=viewport content="width=device-width,initial-scale=1,viewport-fi
     '<meta name="theme-color" content="#D23347"><meta name="apple-mobile-web-app-capable" content="yes">'
     '<meta name="apple-mobile-web-app-title" content="Konserter"><meta name="mobile-web-app-capable" content="yes">')
 
-# title fills the full width on phones (measured after the font has loaded); max 84px on wide screens
+# title keeps its normal size, but shrinks if it would be wider than the screen (measured after the font has loaded)
 rep('</body>', '''<script>(function(){ const h=document.querySelector(".mast h1"); if(!h) return;
   const fit=()=>{ h.style.fontSize=""; h.style.whiteSpace="nowrap"; const r=document.createRange(); r.selectNodeContents(h);
     const tw=r.getBoundingClientRect().width, w=h.clientWidth, fs=parseFloat(getComputedStyle(h).fontSize);
-    h.style.whiteSpace=""; if(tw>0&&w>0) h.style.fontSize=Math.min(84,fs*w/tw*0.99)+"px"; };
+    h.style.whiteSpace=""; if(tw>w&&w>0) h.style.fontSize=(fs*w/tw*0.99)+"px"; };
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(fit); addEventListener("resize",fit); })();</script></body>''')
 # safety: a too-wide child can never push the page sideways
 rep('.mast{display:grid;gap:6px;', '.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;')
