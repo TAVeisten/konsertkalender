@@ -32,11 +32,9 @@ h1 span{color:var(--accent)}
 .news:not(.open) .nt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .news:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .news.st .nt{display:block}
-.news.st .nh{font-weight:600}
-.news.st:not(.open) .nh{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
-.news.st .nh::after{content:" ▾";color:var(--accent)}
-.news.st.open .nh::after{content:" ▴"}
-.news.st:not(.open) .ns{display:none}
+.news.st .nh,.news.st .nc b{font-weight:600}
+.news.st .nc{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.news.st.open .nc,.news.st:not(.open) .nh,.news.st:not(.open) .ns{display:none}
 .news .ns{margin-top:10px;display:grid;gap:12px}
 .news .ns b{display:block;font-weight:700;margin-bottom:3px}
 .news .ns ul{margin:0;padding-left:18px;display:grid;gap:3px}
@@ -779,7 +777,9 @@ const SUMMARY = {"head": "26 nye konserter · 5 tributekonserter · 18 spilleste
     if(S&&(S.head||secs.length)){ t.textContent=""; const hd=document.createElement("span"); hd.className="nh"; hd.textContent=S.head||secs[0].t; t.appendChild(hd);
       if(secs.length){ const ns=document.createElement("div"); ns.className="ns";
         secs.forEach(s=>{ const d=document.createElement("div"), b=document.createElement("b"), ul=document.createElement("ul"); b.textContent=s.t; s.items.forEach(i=>{ const li=document.createElement("li"); li.textContent=String(i); ul.appendChild(li); }); d.append(b,ul); ns.appendChild(d); });
-        t.appendChild(ns); n.classList.add("st"); } } }catch(e){}
+        t.appendChild(ns); n.classList.add("st");
+        const nc=document.createElement("span"), cb=document.createElement("b"); nc.className="nc"; cb.textContent=hd.textContent+". ";
+        nc.append(cb, secs.map(s=>s.t+": "+s.items.join("; ")).join(". ")); t.insertBefore(nc,hd); } } }catch(e){}
   if(!t.textContent.trim()){ n.hidden=true; return; }
   const tog=()=>{ const o=n.classList.toggle("open"); n.setAttribute("aria-expanded",String(o)); };
   n.addEventListener("click",tog); n.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tog(); } });
@@ -807,7 +807,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="5f9a21dd4b68"; let busy=false;
+<script>(function(){ const BUILD="3966b9b1e455"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
