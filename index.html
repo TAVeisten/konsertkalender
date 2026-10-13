@@ -31,7 +31,8 @@ h1 span{color:var(--accent)}
 .news{background:var(--surface);border:1px solid var(--line);padding:10px 12px 10px 14px;border-radius:8px;font-size:14px;line-height:1.4;cursor:pointer;max-width:70ch;margin-top:4px;display:flex;align-items:flex-end;gap:12px}
 .news{flex-wrap:wrap;row-gap:2px}
 .news>.nt{flex:1 1 0;min-width:0}
-.news .nl{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:.5em;white-space:nowrap}
+.news .nl{flex:0 0 100%;display:block;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.news.open .nl{margin-bottom:4px}
 .news:hover{border-color:var(--muted)}
 .news:not(.open) .nt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 .news:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -216,7 +217,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
     <h1>Konsert<span>kalender</span></h1>
     <p class="sub">Kommende konserter med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>
     <div class="updated">Sist oppdatert <b id="upd">tirsdag 13.10.2026 kl. 07.54</b></div>
-    <div class="news" id="news" role="button" tabindex="0" aria-expanded="false" title="Trykk for å se hele"><span class="nt" id="sum">26 nye konserter, av dem 5 tributekonserter (Brit Floyd og The Nordic Floyd Show i Olavshallen, Purple Underground i Oslo og In Memory of Elvis Gospel i Kongsberg). Nytt på prioriterte scener: Salmer på pøbb 10. november og Hazlett (Rockefeller). Ellers bl.a. Robbie Williams (Kaldnes, Tønsberg), Fjorden Baby! (USF Verftet) og Janove (Maihaugsalen). Ingen nye festivaler. Lillestrøm Storbandfestival: 10 nye band. Høstsabbat: Monolord lagt til. Ingen nye festivaldager publisert. 27 spillesteder fikk posisjon kontrollert mot Kartverket, 18 ble rettet (bl.a. Trondheim Spektrum, Stavanger Konserthus, Kilden, Cornerteateret og Fredrikstad Domkirke) og 3 fikk posisjon for første gang (Maihaugsalen, Hamar Kulturhus, Ibsenhuset). 6 passerte konserter er fjernet. Rockefellers og Kometens egne programsider kunne ikke leses i dag (sjekket via Songkick, JamBase, Perto og TicketTailor). Dølajazz’ side kunne ikke leses, og datoene for Øyafestivalen og Piknik i Parken 2027 er ikke bekreftet ennå.</span></div>
+    <div class="news" id="news" role="button" tabindex="0" aria-expanded="false" title="Trykk for å se hele"><span class="nl">Nytt i dag</span><span class="nt" id="sum">26 nye konserter, av dem 5 tributekonserter (Brit Floyd og The Nordic Floyd Show i Olavshallen, Purple Underground i Oslo og In Memory of Elvis Gospel i Kongsberg). Nytt på prioriterte scener: Salmer på pøbb 10. november og Hazlett (Rockefeller). Ellers bl.a. Robbie Williams (Kaldnes, Tønsberg), Fjorden Baby! (USF Verftet) og Janove (Maihaugsalen). Ingen nye festivaler. Lillestrøm Storbandfestival: 10 nye band. Høstsabbat: Monolord lagt til. Ingen nye festivaldager publisert. 27 spillesteder fikk posisjon kontrollert mot Kartverket, 18 ble rettet (bl.a. Trondheim Spektrum, Stavanger Konserthus, Kilden, Cornerteateret og Fredrikstad Domkirke) og 3 fikk posisjon for første gang (Maihaugsalen, Hamar Kulturhus, Ibsenhuset). 6 passerte konserter er fjernet. Rockefellers og Kometens egne programsider kunne ikke leses i dag (sjekket via Songkick, JamBase, Perto og TicketTailor). Dølajazz’ side kunne ikke leses, og datoene for Øyafestivalen og Piknik i Parken 2027 er ikke bekreftet ennå.</span></div>
   </header>
 
   <div class="bar">
@@ -792,9 +793,6 @@ const SUMMARY = {"head": "26 nye konserter · 5 tributekonserter · 18 spilleste
         const nc=document.createElement("span"), cb=document.createElement("b"); nc.className="nc"; cb.textContent=hd.textContent+". ";
         nc.append(cb, secs.map(s=>s.t+": "+s.items.join("; ")).join(". ")); t.insertBefore(nc,hd); } } }catch(e){}
   if(!t.textContent.trim()){ n.hidden=true; return; }
-  { const lab=()=>{ const s=document.createElement("span"); s.className="nl"; s.textContent="Nytt i dag ·"; return s; };
-    const targets=n.classList.contains("st")?[t.querySelector(".nc"),t.querySelector(".nh")]:[t];
-    targets.forEach(el=>{ if(el) el.insertBefore(lab(),el.firstChild); }); }
   const more=document.createElement("span"); more.className="nm"; more.textContent="Vis alt"; more.hidden=true; n.appendChild(more);
   const fit=()=>{ if(n.classList.contains("open")) return; const c=n.querySelector(".nc")||t; more.hidden=!(n.classList.contains("st")||c.scrollHeight>c.clientHeight+1); };
   fit(); addEventListener("resize",fit); document.fonts&&document.fonts.ready.then(fit);
@@ -824,7 +822,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="9e1e77c8f09d"; let busy=false;
+<script>(function(){ const BUILD="8fdb7567616c"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
