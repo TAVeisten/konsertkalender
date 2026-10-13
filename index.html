@@ -327,7 +327,7 @@ function windowFor(w){
 // build controls
 const $ = id => document.getElementById(id);
 const whenEl=$("when");
-[["all","Alle datoer"],["today","I kveld"],["weekend","Denne helgen"],["week","Neste 7 dager"],["30","Neste 30 dager"],["custom","Velg datoer"]].forEach(([k,l])=>{
+[["all","Alle"],["today","I kveld"],["weekend","Helgen"],["week","7 dager"],["30","30 dager"],["custom","Velg datoer"]].forEach(([k,l])=>{
   const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=l; b.dataset.k=k; whenEl.appendChild(b); });
 const favChip=document.createElement("button"); favChip.type="button"; favChip.className="chip fav"; favChip.textContent="★ Mine"; favChip.dataset.k="__fav"; whenEl.appendChild(favChip);
 const festChip=document.createElement("button"); festChip.type="button"; festChip.className="chip fsw"; festChip.innerHTML='<span class="sw" aria-hidden="true"></span>Festivalartister <span class="st"></span>'; festChip.dataset.k="__fest"; festChip.title="Vis eller skjul artister som spiller på festivaler"; { const gp=$("gearPanel"); gp.insertBefore(festChip,gp.querySelector("p")); }
@@ -822,7 +822,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="8fdb7567616c"; let busy=false;
+<script>(function(){ const BUILD="bff8550ee60d"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
