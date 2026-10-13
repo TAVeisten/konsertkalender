@@ -38,6 +38,10 @@ h1 span{color:var(--accent)}
 .news .ns{margin-top:10px;display:grid;gap:12px}
 .news .ns b{display:block;font-weight:700;margin-bottom:3px}
 .news .ns ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.news .nm{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;font-weight:700;color:var(--accent)}
+.news .nm::after{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.news.open .nm::after{transform:rotate(-135deg) translate(-1px,-1px)}
+.news:hover .nm{text-decoration:underline;text-underline-offset:3px}
 .bar{position:relative;z-index:5;background:var(--bg);padding-block:12px;display:grid;gap:10px;border-bottom:1px solid var(--line)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .bar.pinned{position:sticky;top:env(safe-area-inset-top,0px);box-shadow:0 6px 16px rgba(0,0,0,.12)}
@@ -781,7 +785,10 @@ const SUMMARY = {"head": "26 nye konserter · 5 tributekonserter · 18 spilleste
         const nc=document.createElement("span"), cb=document.createElement("b"); nc.className="nc"; cb.textContent=hd.textContent+". ";
         nc.append(cb, secs.map(s=>s.t+": "+s.items.join("; ")).join(". ")); t.insertBefore(nc,hd); } } }catch(e){}
   if(!t.textContent.trim()){ n.hidden=true; return; }
-  const tog=()=>{ const o=n.classList.toggle("open"); n.setAttribute("aria-expanded",String(o)); };
+  const more=document.createElement("span"); more.className="nm"; more.textContent="Vis alt"; more.hidden=true; n.appendChild(more);
+  const fit=()=>{ if(n.classList.contains("open")) return; const c=n.querySelector(".nc")||t; more.hidden=!(n.classList.contains("st")||c.scrollHeight>c.clientHeight+1); };
+  fit(); addEventListener("resize",fit); document.fonts&&document.fonts.ready.then(fit);
+  const tog=()=>{ const o=n.classList.toggle("open"); n.setAttribute("aria-expanded",String(o)); more.textContent=o?"Vis mindre":"Vis alt"; };
   n.addEventListener("click",tog); n.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tog(); } });
 })();
 render();
@@ -807,7 +814,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="3966b9b1e455"; let busy=false;
+<script>(function(){ const BUILD="c901ea5478bf"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
