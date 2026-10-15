@@ -823,15 +823,12 @@ render();
   new MutationObserver(upd).observe(cnt,{childList:true,subtree:true,characterData:true}); q.addEventListener("input",()=>setTimeout(upd,0)); upd();
   // when the search field is tapped on a phone, slide it to the top so filters, count and first hits stay above the keyboard
   q.addEventListener("focus",()=>{ if(innerWidth>700) return; let inFrame=true; try{ inFrame=window.self!==window.top; }catch(e){} // inside the Claude app: move it at once, before the keyboard opens; the app then moves it up a bit more by itself, so stop short by the height of the search field and chips
-    if(inFrame){ const t0=q.getBoundingClientRect().top; if(t0>90&&!(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs")))) { const pl=document.getElementById("placeLbl"), extra=pl?Math.max(0,pl.getBoundingClientRect().top-t0):0; window.scrollTo(0,scrollY+t0-12-extra); } document.body.classList.add("qfocus");
-      // after the keyboard has opened, check where the field actually ended up and nudge it to just below the top
-      const fix=()=>{ if(document.activeElement!==q||(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs")))) return; const vv=window.visualViewport, top=q.getBoundingClientRect().top-(vv?vv.offsetTop:0); if(top>30) window.scrollBy(0,top-12); };
-      setTimeout(fix,500); setTimeout(fix,1000); setTimeout(fix,1600); return; } document.body.classList.add("qfocus");
+    if(inFrame){ const t0=q.getBoundingClientRect().top; if(t0>90&&!(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs")))) { const pl=document.getElementById("placeLbl"), extra=pl?Math.max(0,pl.getBoundingClientRect().top-t0):0; window.scrollTo(0,scrollY+t0-12-extra); } document.body.classList.add("qfocus"); return; } document.body.classList.add("qfocus");
     setTimeout(()=>{ if(bar&&(bar.classList.contains("pinned")||bar.classList.contains("abs"))) return;
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="4d52eacc36e4"; let busy=false;
+<script>(function(){ const BUILD="807fc1ffceaa"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
