@@ -336,7 +336,7 @@ const festChip=document.createElement("button"); festChip.type="button"; festChi
 festChip.addEventListener("click",e=>{ e.stopPropagation(); state.showFest=!state.showFest; store("kk-showfest",state.showFest); render(); });
 { const gear=$("gear"), gp=$("gearPanel"), closeG=()=>{ gp.hidden=true; gear.setAttribute("aria-expanded","false"); };
   gear.addEventListener("click",e=>{ e.stopPropagation(); gp.hidden=!gp.hidden; gear.setAttribute("aria-expanded",String(!gp.hidden)); });
-  gp.addEventListener("click",e=>e.stopPropagation()); document.addEventListener("click",closeG); document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeG(); }); }
+  gp.addEventListener("click",e=>e.stopPropagation()); document.addEventListener("pointerdown",e=>{ if(!gp.hidden && !gp.contains(e.target) && !gear.contains(e.target)) closeG(); },true); document.addEventListener("click",closeG); document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeG(); }); }
 whenEl.addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return;
   if(b.dataset.k==="__fav") state.onlyFav=!state.onlyFav; else if(b.dataset.k==="__fest"){ state.showFest=!state.showFest; store("kk-showfest",state.showFest); } else state.when=b.dataset.k; render(); });
 $("from").addEventListener("change",e=>{state.from=e.target.value;render();});
@@ -375,6 +375,7 @@ placePanel.addEventListener("click",e=>{ e.stopPropagation(); const b=e.target.c
   if(pv.startsWith("v:")){ state.venue=pv.slice(2); state.place="c:"+pv.split("|")[1]; state.view= state.view==="fests"?"list":state.view; }
   else state.place=pv;
   placePanel.hidden=true; placeBtn.setAttribute("aria-expanded","false"); render(); });
+document.addEventListener("pointerdown",e=>{ if(!placePanel.hidden && !placePanel.contains(e.target) && !placeBtn.contains(e.target)){ placePanel.hidden=true; placeBtn.setAttribute("aria-expanded","false"); } },true);
 document.addEventListener("click",()=>{ if(!placePanel.hidden){ placePanel.hidden=true; placeBtn.setAttribute("aria-expanded","false"); } });
 function inPlace(x){ if(!state.place) return true; const v=state.place.slice(2); return state.place[0]==="f" ? x.county===v : x.city===v; }
 fill($("home"), ["__me","__gps"].concat(Object.keys(HOMES).sort(sortNb)));
@@ -404,6 +405,7 @@ homeBtn.addEventListener("click",e=>{ e.stopPropagation(); placePanel.hidden=tru
 homePanel.addEventListener("click",e=>{ e.stopPropagation(); const b=e.target.closest(".popt"); if(!b) return;
   const sel=$("home"); sel.value=b.dataset.home; sel.dispatchEvent(new Event("change"));
   homePanel.hidden=true; homeBtn.setAttribute("aria-expanded","false"); });
+document.addEventListener("pointerdown",e=>{ if(!homePanel.hidden && !homePanel.contains(e.target) && !homeBtn.contains(e.target)){ homePanel.hidden=true; homeBtn.setAttribute("aria-expanded","false"); } },true);
 document.addEventListener("click",()=>{ if(!homePanel.hidden){ homePanel.hidden=true; homeBtn.setAttribute("aria-expanded","false"); } });
 $("home").value = (HOMES[state.home]||(state.home==="__me"&&meLoc)||(state.home==="__gps"&&gpsLoc)) ? state.home : "";
 function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
@@ -824,7 +826,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="acbdf198517c"; let busy=false;
+<script>(function(){ const BUILD="aa039a5b7882"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
