@@ -19,7 +19,7 @@
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 .wrap{position:relative;max-width:860px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
-header.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding-block:8px 18px;border-bottom:3px solid var(--ink)}
+header.mast{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding-block:8px 18px}
 .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
 h1{font-family:var(--display);font-weight:900;font-size:clamp(44px,11vw,84px);line-height:.88;margin:0;text-transform:uppercase;letter-spacing:-.01em}
 h1 span{color:var(--accent)}
@@ -61,6 +61,8 @@ input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 #q{flex:1 1 220px;font-size:16px;padding:12px 12px 12px 40px;border:2px solid var(--muted);border-radius:10px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237A8592' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 12px center}
 #q:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--soft)}
 #q::placeholder{color:var(--muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #q{background-color:#202B38}}
+:root[data-theme="dark"] #q{background-color:#202B38}
 .selects{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .selects select{width:100%}
 .pwrap{position:relative}
@@ -826,7 +828,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="aa039a5b7882"; let busy=false;
+<script>(function(){ const BUILD="662018602492"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
