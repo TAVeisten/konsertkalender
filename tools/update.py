@@ -63,7 +63,7 @@ PREF = {"Eventworld": 1, "Songkick": 2, "TicketCo": 3}
 TRIBUTE_RE = re.compile(r"tribute|hyllest|candlelight", re.I)
 WEEKDAYS = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
 MONTHS = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"]
-CONSTS = ["DATA", "SOURCES", "VENUE_POS", "VENUE_URL", "CITY", "HOMES", "FESTS", "SUMMARY"]
+CONSTS = ["DATA", "SOURCES", "VENUE_POS", "VENUE_URL", "CITY", "HOMES", "FESTS", "SUMMARY", "FAVS"]
 
 
 def die(msg):
@@ -420,6 +420,15 @@ def fav_words(s):
     return " ".join(re.findall(r"[^\W_]+", s))
 
 
+def fav_file():
+    """favoritter.json as it is in the repo (stars, artists, venues)."""
+    try:
+        f = json.load(open(FAVS, encoding="utf-8"))
+    except Exception:
+        f = {}
+    return {k: [x for x in f.get(k) or [] if isinstance(x, str)] for k in ("stars", "artists", "venues")}
+
+
 def load_favs():
     """Favourite artists and venues from favoritter.json (written by the page on every device)."""
     try:
@@ -574,6 +583,7 @@ def cmd_finish(failed, highlights):
     if fav_items:
         head = "%s fra favorittene · %s" % (pl(len(fav_items), "nyhet", "nyheter"), head)
     d["SUMMARY"] = {"head": head, "sections": secs}
+    d["FAVS"] = fav_file()  # the Claude app shows the favourites as they are this morning
 
     n = now()
     stamp = "%s %s kl. %s" % (WEEKDAYS[n.weekday()], n.strftime("%d.%m.%Y"), n.strftime("%H.%M"))
