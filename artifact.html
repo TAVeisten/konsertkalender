@@ -216,7 +216,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 .fopt .fbox{flex:0 0 22px;height:22px;border:2px solid var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center}
 .fopt.on .fbox{background:var(--heart);border-color:var(--heart)}
 .fopt.on .fbox::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
-.fopt{min-height:52px;padding-block:0}.fopt .fic{flex:0 0 22px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}.fopt .fic svg{width:20px;height:20px;display:block}.fopt .flab{line-height:1.2}.fhead{text-align:right;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 14px 0}.fopt .fct{margin-left:auto;padding-left:16px;font-weight:600;color:var(--ink)}.fopt.zero .fic,.fopt.zero .flab,.fopt.zero .fct{opacity:.4}.fopt.zero .fct{font-weight:400}
+.fopt{min-height:52px;padding-block:0}.fopt .fic{flex:0 0 22px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}.fopt .fic svg{width:20px;height:20px;display:block}.fopt .flab{line-height:1.2}.fhead{text-align:right;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 12px 0;line-height:1.25}.fopt .fct{margin-left:auto;padding-left:16px;font-weight:600;color:var(--ink)}.fopt.zero .fic,.fopt.zero .flab,.fopt.zero .fct{opacity:.4}.fopt.zero .fct{font-weight:400}
 .fclr{color:var(--muted);font-size:15px;border-top:1px solid var(--line)!important;border-radius:0!important;margin-top:4px}
 .ftog{font:inherit;font-size:18px;line-height:1;background:none;border:0;padding:3px 6px;margin-left:2px;cursor:pointer;color:var(--muted);opacity:.6;vertical-align:-1px}
 .ftog[aria-pressed="true"]{opacity:1;color:var(--heart)}
@@ -436,7 +436,7 @@ const whenEl=$("when");
 const favChip=document.createElement("button"); favChip.type="button"; favChip.className="chip fmenu"; favChip.dataset.k="__favmenu";
 favChip.setAttribute("aria-haspopup","true"); favChip.setAttribute("aria-expanded","false"); whenEl.insertBefore(favChip,whenEl.firstChild);
 const favPanel=document.createElement("div"); favPanel.className="panel favpanel"; favPanel.hidden=true; favPanel.setAttribute("role","menu");
-favPanel.appendChild(el("div","fhead","Antall konserter"));
+{ const h=el("div","fhead"); h.innerHTML="Antall<br>konserter"; favPanel.appendChild(h); }
 // icons drawn as SVG so ★ ♥ 📍 get the same size and spacing on iPhone, iPad and Mac (emoji fonts differ)
 const FIC={fS:'<svg viewBox="0 0 24 24"><path fill="var(--star)" d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.2l-5.8 3.2 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>',fA:'<svg viewBox="0 0 24 24"><path fill="var(--heart)" d="M12 21s-7.5-4.6-9.4-9.3C1.2 8.2 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.8 3.7 4.4 7.2C19.5 16.4 12 21 12 21z"/></svg>',fV:'<svg viewBox="0 0 24 24"><path fill="var(--accent)" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.6" fill="var(--surface)"/></svg>'};
 [["fS","★","Stjernemerkede konserter"],["fA","♥","Favorittartister"],["fV","📍","Favorittsteder"]].forEach(([k,i,l])=>{
