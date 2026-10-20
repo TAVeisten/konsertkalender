@@ -159,7 +159,7 @@ ol.list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .date{text-align:center;border-right:2px dashed var(--line);padding-block:2px;font-variant-numeric:tabular-nums}
 .date .d{font-family:var(--display);font-weight:800;font-size:30px;line-height:1}
 .date .w{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
-.today .date .d{color:var(--accent)}
+.today .date .d{color:var(--blue)}
 .info{min-width:0}
 .artist{font:inherit;font-weight:600;font-size:16px;margin:0;overflow-wrap:anywhere;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;text-align:left}
 .where{font-size:13px;color:var(--muted);margin:1px 0 0}
@@ -170,7 +170,7 @@ ol.list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .actions{display:flex;gap:6px;align-items:center}
 .star{font:inherit;font-size:20px;line-height:1;background:none;border:0;color:var(--muted);opacity:.5;cursor:pointer;padding:6px}
 .star[aria-pressed="true"]{color:var(--star);opacity:1}
-.tix{font-size:13px;font-weight:600;text-decoration:none;background:var(--accent);color:var(--accent-ink);padding:7px 11px;border-radius:6px;white-space:nowrap}
+.tix{font-size:13px;font-weight:600;text-decoration:none;background:var(--blue-bg);color:var(--blue-ink);padding:7px 11px;border-radius:6px;white-space:nowrap}
 .tix.find{background:var(--chip);color:var(--ink)}
 .empty{padding:40px 0;text-align:center;color:var(--muted)}
 /* calendar */
@@ -184,9 +184,13 @@ ol.list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .day.out{visibility:hidden}
 .day.past{opacity:.4;cursor:default}
 .day .n{font-weight:600;font-size:13px}
-.day .c{font-size:11px;font-weight:700;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 6px;align-self:flex-end}
-.day[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.day.isToday .n{color:var(--accent)}
+.day .c{font-size:11px;font-weight:700;background:var(--blue-bg);color:var(--blue-ink);border-radius:999px;padding:0 6px;align-self:flex-end}
+.day[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.day.isToday .n{color:var(--blue)}
+/* light blue for tickets and today, so red is not used for everyday actions */
+:root{--blue:#1F6FB8;--blue-bg:#D3E6F8;--blue-ink:#0B3F6E}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#7DBBFF;--blue-bg:#1D3B5A;--blue-ink:#CFE6FF}}
+:root[data-theme="dark"]{--blue:#7DBBFF;--blue-bg:#1D3B5A;--blue-ink:#CFE6FF}
 /* index lists */
 .idx{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
 .idx button{font:inherit;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;color:var(--ink);display:flex;justify-content:space-between;gap:10px;align-items:center}
