@@ -692,7 +692,7 @@ function filtered(opts={}){
     (!state.venue || g.venue+"|"+g.city===state.venue) &&
     (!state.artist || g.artist===state.artist) &&
     favOk(g) &&
-    (!state.q || (g.artist+" "+g.venue+" "+g.city+" "+g.county).toLowerCase().includes(state.q)) &&
+    (!state.q || (state.view==="venues" ? g.venue+" "+g.city+" "+g.county : state.view==="artists" ? g.artist : g.artist+" "+g.venue+" "+g.city+" "+g.county).toLowerCase().includes(state.q)) &&
     (maxD===null || (distOf(g)??1e9) <= maxD)
   );
 }
@@ -962,7 +962,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="52274ab4567b"; let busy=false;
+<script>(function(){ const BUILD="ba6d2b113c90"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };

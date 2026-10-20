@@ -650,7 +650,7 @@ function filtered(opts={}){
     (!state.venue || g.venue+"|"+g.city===state.venue) &&
     (!state.artist || g.artist===state.artist) &&
     favOk(g) &&
-    (!state.q || (g.artist+" "+g.venue+" "+g.city+" "+g.county).toLowerCase().includes(state.q)) &&
+    (!state.q || (state.view==="venues" ? g.venue+" "+g.city+" "+g.county : state.view==="artists" ? g.artist : g.artist+" "+g.venue+" "+g.city+" "+g.county).toLowerCase().includes(state.q)) &&
     (maxD===null || (distOf(g)??1e9) <= maxD)
   );
 }
