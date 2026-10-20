@@ -9,6 +9,7 @@ Kommende konserter i Norge, med hovedvekt på Oslo-området, Bergen, Trondheim o
   konserter og festivaler, fjerner dubletter og passerte konserter, holder orden på spillestedenes posisjoner,
   lager sammendraget og tidsstempelet og sjekker at skriptene i siden er gyldige. Se toppen av filen for bruk.
 - `favoritter.json` er stjernene, favorittartistene og favorittstedene. Siden skriver den selv (med en GitHub-nøkkel
-  som legges inn én gang per enhet under Innstillinger), så de er like på alle enheter. Den daglige oppdateringen
+  som limes inn én gang under Innstillinger i hvert sted siden åpnes – Safari og Mine sider teller hver for seg),
+  så de er like overalt der nøkkelen er lagt inn. Den daglige oppdateringen
   leser den og lager seksjonen «Nytt fra favorittene» øverst i sammendraget.
 - Konsertlisten oppdateres automatisk hver dag.
