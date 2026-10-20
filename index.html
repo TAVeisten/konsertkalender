@@ -478,7 +478,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
       if(!r.ok) return null; const j=await r.json(); const x=(j.adresser||[])[0]; return x? x.adressetekst+", "+x.postnummer+" "+(x.poststed||"").replace(/\S+/g,w=>w[0]+w.slice(1).toLowerCase()) : null; }catch(e){ return null; } };
   const getSample=async()=>{ try{ return await claude.use("sample"); }catch(e){ return null; } };
   const okNo=(la,lo)=>la>=57&&la<=72&&lo>=3&&lo<=32;
-  const errText=e=>e&&e.code==="not_granted"?"Adresseoppslag ble ikke tillatt. Skriv inn koordinater i stedet.":e&&e.code==="rate_limited"?"For mange oppslag akkurat nå. Prøv igjen om litt.":"Fant ikke adressen akkurat nå"+(e&&e.code?" ("+e.code+")":"")+". Prøv igjen, eller skriv inn koordinater.";
+  const errText=e=>e&&e.code==="timeout"?"Oppslaget tok for lang tid. Prøv igjen, eller åpne konsertkalenderen fra Mine sider – der går adressesøket rett til Kartverket.":e&&e.code==="not_granted"?"Adresseoppslag ble ikke tillatt. Skriv inn koordinater i stedet.":e&&e.code==="rate_limited"?"For mange oppslag akkurat nå. Prøv igjen om litt.":"Fant ikke adressen akkurat nå"+(e&&e.code?" ("+e.code+")":"")+". Prøv igjen, eller skriv inn koordinater.";
   const reverse=async v=>{ const g=await geoRev(v);
     if(g){ if(meLoc&&meLoc[0]===v[0]&&meLoc[1]===v[1]){ meLabel=g; store("kk-melabel",g); savePrefs(); showCur(); syncHome(); } return; }
     const sample=await getSample(); if(!sample) return;
@@ -518,7 +518,7 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
           cands.appendChild(bt); });
         return; }
     }
-    if(ta){ busy=false; go.disabled=false; return; }
+    if(ta){ busy=false; go.disabled=false; err.textContent="Fant ingen forslag. Skriv hele adressen med husnummer og sted, og trykk «Bruk»."; return; }
     const clean=x=>x.replace(/\n/g,", ").replace(/\b(norge|norway|noreg|buskerud|viken|akershus|østfold|vestfold|telemark|agder|rogaland|vestland|hordaland|møre og romsdal|trøndelag|nordland|troms|finnmark|innlandet|oppland|hedmark)\b/gi," ").replace(/\s+/g," ").replace(/[ ,]+$/,"").trim();
     let g=await geo(clean(t)); if(g&&!g.length){ const m=clean(t).match(/^(\D+?\s\d+\s?[a-zA-Z]?)\b.*?\b(\d{4})\b/); if(m) g=await geo(m[1]+" "+m[2]); }
     if(g){ busy=false; go.disabled=false; const ok=g.filter(x=>okNo(x.la,x.lo)); if(ok.length){ showList(ok); return; } }
@@ -529,8 +529,10 @@ function parseLoc(t){ t=String(t||"").replace(/[°º]/g," ");
       const ask=()=>sample.json("Du er et adressesøk for Norge. Brukeren har skrevet: \""+t.slice(0,200)+"\". Teksten kan være en hel adresse, bare et gatenavn, eller bare begynnelsen av et gatenavn (som et søkefelt med forslag). Finn gater og adresser i Norge som passer, også i flere byer og kommuner når samme navn finnes flere steder. Har brukeren skrevet husnummer, ta med nummeret; ellers bruk midten av gata. Gi høyst 10 forslag, de mest sannsynlige først. Svar bare med JSON på formen {\"treff\": [{\"adresse\": \"Gate nr, postnummer Sted\", \"lat\": 59.7449, \"lon\": 10.2021}]} med WGS84-koordinater som tall. Gi en tom liste bare hvis du virkelig ikke finner noe.",{modelTier:"default",cache:false});
       const num=v=>Number(String(v).replace(",","."));
       const parse=r=>{ const arr=r&&(Array.isArray(r.treff)?r.treff:Array.isArray(r)?r:[]); return (arr||[]).map(x=>({a:String(x.adresse||x.address||x.navn||"").slice(0,120),la:num(x.lat??x.latitude),lo:num(x.lon??x.lng??x.longitude)})).filter(x=>x.a&&okNo(x.la,x.lo)); };
-      let list=parse(await ask());
-      if(!list.length) list=parse(await ask());
+      err.textContent="Leter etter adressen … dette kan ta litt tid her.";
+      const ask2=()=>Promise.race([ask(),new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),30000))]);
+      let list=parse(await ask2());
+      if(!list.length) list=parse(await ask2());
       if(!list.length){ err.textContent="Fant ikke adressen. Prøv med gate, nummer og sted, f.eks. «Strømsø torg 4, Drammen»."; }
       else showList(list,true);
     }catch(e){ err.textContent=errText(e); }
@@ -831,7 +833,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="3888d18bd937"; let busy=false;
+<script>(function(){ const BUILD="964d31ed0d0a"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
