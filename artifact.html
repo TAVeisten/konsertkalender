@@ -188,9 +188,9 @@ ol.list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .day[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
 .day.isToday .n{color:var(--blue)}
 /* light blue for tickets and today, so red is not used for everyday actions */
-:root{--blue:#1F6FB8;--blue-bg:#D3E6F8;--blue-ink:#0B3F6E}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#7DBBFF;--blue-bg:#1D3B5A;--blue-ink:#CFE6FF}}
-:root[data-theme="dark"]{--blue:#7DBBFF;--blue-bg:#1D3B5A;--blue-ink:#CFE6FF}
+:root{--blue:#2a52b8;--blue-bg:#e6eefc;--blue-ink:#2a52b8} /* same blue as Jobbtavla */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--blue:#a6bff7;--blue-bg:#1a2a4a;--blue-ink:#a6bff7}}
+:root[data-theme="dark"]{--blue:#a6bff7;--blue-bg:#1a2a4a;--blue-ink:#a6bff7}
 /* index lists */
 .idx{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
 .idx button{font:inherit;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;color:var(--ink);display:flex;justify-content:space-between;gap:10px;align-items:center}
