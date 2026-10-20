@@ -92,7 +92,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{ou
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;font:inherit;font-size:13px;font-weight:600;border:1.5px solid var(--muted);background:transparent;color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .chip:hover{border-color:var(--ink)}
-.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:var(--ink)}
 .chip.fav[aria-pressed="true"]{background:var(--star);border-color:var(--star);color:#1A1300}
 .chip.fsw{display:inline-flex;align-items:center;gap:8px;padding-left:6px;margin-right:6px}
 .chip.fsw .sw{position:relative;width:30px;height:18px;border-radius:999px;background:var(--line);transition:background .2s;flex:0 0 auto}
@@ -210,7 +210,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 :root{--heart:#C2185B}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--heart:#FF7AA8}}
 :root[data-theme="dark"]{--heart:#FF7AA8}
-.chip.fmenu.on{background:var(--heart);border-color:var(--heart);color:#fff}
+.chip.fmenu.on{background:var(--soft);border-color:var(--accent);color:var(--ink)}
 .favpanel{min-width:min(280px,calc(100vw - 32px));width:max-content}
 .fopt{justify-content:flex-start;gap:12px}
 .fopt .fbox{flex:0 0 22px;height:22px;border:2px solid var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center}
@@ -229,7 +229,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 .idx li>.ftog{flex:0 0 46px;margin:0;padding:0;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .idx li>.ftog.vt{font-size:16px}
 .chip.pinfav{border-color:var(--heart)}
-.chip.pinfav[aria-pressed="true"]{background:var(--heart);border-color:var(--heart);color:#fff}
+.chip.pinfav[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:var(--ink)}
 .gearpanel{grid-template-columns:minmax(0,1fr)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.35;width:max-content;max-width:calc(100vw - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .favsync{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:8px;border-top:1px solid var(--line);padding-top:12px;margin-top:2px}
