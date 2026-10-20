@@ -126,12 +126,14 @@ header.mast{position:relative}
 .range{font-size:13px;font-weight:600;color:var(--accent);margin-top:2px}
 .tab{font:inherit;font-weight:600;font-size:14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:6px 10px 8px;cursor:pointer}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-.status{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
-.status b{color:var(--ink);font-variant-numeric:tabular-nums}
+.status{font-size:16px;color:var(--muted);display:flex;justify-content:space-between;gap:10px 12px;flex-wrap:wrap;align-items:center}
+.status b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:22px;font-weight:800}
+#count{font-weight:600;color:var(--ink)}
+#homeLbl{font-size:16px;font-weight:700;color:var(--ink);white-space:nowrap}
 .home{display:flex;gap:6px;align-items:center}
 .home select{padding:5px 8px;font-size:13px}
 .home{position:relative}
-.homebtn{width:auto;max-width:60vw;padding:5px 26px 5px 8px;font-size:13px}
+.homebtn{width:auto;max-width:60vw;padding:8px 30px 8px 12px;font-size:16px;font-weight:600;border:1.5px solid var(--accent);border-radius:8px}
 .homepanel{left:auto;right:0}
 .ptog[aria-expanded="true"]+.popt{font-weight:700}
 .ppaste{border-bottom:1px solid var(--line);padding:6px 6px 10px;margin-bottom:4px;display:grid;gap:6px;max-width:340px}
@@ -828,7 +830,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="5e4425c51887"; let busy=false;
+<script>(function(){ const BUILD="a70d52e11102"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
