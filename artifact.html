@@ -462,9 +462,7 @@ favPanel.addEventListener("click",e=>{ e.stopPropagation(); if(e.target.closest(
   const it=e.target.closest(".fitem"); if(it){ const X=it.dataset.t==="fA"?favEx.a:favEx.v; X.has(it.dataset.key)?X.delete(it.dataset.key):X.add(it.dataset.key); if(!X.has(it.dataset.key)) state[it.dataset.t]=true; favExSave(); render(); return; }
   const al=e.target.closest(".fall"); if(al){ const X=al.dataset.t==="fA"?favEx.a:favEx.v, M=al.dataset.t==="fA"?favA:favV; if(X.size) X.clear(); else M.forEach((v,k)=>X.add(k)); favExSave(); render(); return; }
   const b=e.target.closest(".popt"); if(!b) return;
-  // artist/venue rows: the tick box and icon (left part) switch the filter; the name, number and arrow open/close the list
-  if((b.dataset.f==="fA"||b.dataset.f==="fV") && !b.querySelector(".fexp").hidden){ const lab=b.querySelector(".flab").getBoundingClientRect(); if(e.clientX>=lab.left-4){ const t=b.dataset.f; favOpen.has(t)?favOpen.delete(t):favOpen.add(t); favSubs(); return; } }
-  if(b.dataset.f){ state[b.dataset.f]=!state[b.dataset.f];  } else { state.fS=state.fA=state.fV=false; closeFav(); } render(); });
+  if(b.dataset.f){ state[b.dataset.f]=!state[b.dataset.f]; if(state[b.dataset.f]&&b.dataset.f!=="fS"&&!favOpened.has(b.dataset.f)){ favOpen.add(b.dataset.f); favOpened.add(b.dataset.f); } } else { state.fS=state.fA=state.fV=false; closeFav(); } render(); });
 document.addEventListener("pointerdown",e=>{ if(!favPanel.hidden && !favPanel.contains(e.target) && !favChip.contains(e.target)) closeFav(); },true);
 document.addEventListener("click",()=>{ if(!favPanel.hidden) closeFav(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeFav(); });
