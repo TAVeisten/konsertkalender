@@ -338,7 +338,7 @@ const FAV_WEB=/github\.io$/.test(location.hostname);
 const nA=x=>String(x||"").normalize("NFKC").toLowerCase().replace(/^the\s+/,"").replace(/[^\p{L}\p{N}]+/gu," ").trim();
 const nV=x=>String(x||"").normalize("NFKC").toLowerCase().trim();
 const favA=new Map(), favV=new Map();
-let favBase=load("kk-favbase",null), favPending=load("kk-pending",[]), favToken=load("kk-ghtoken",""), favErr="", favSynced=load("kk-synced",""), favPulled=0;
+let favToken=load("kk-ghtoken",""), favBase=favToken?load("kk-favbase",null):null, favPending=load("kk-pending",[]), favErr="", favSynced=load("kk-synced",""), favPulled=0;
 function opsOn(d,ops){ const S=new Set(d.stars||[]), A=new Map((d.artists||[]).map(x=>[nA(x),x])), V=new Map((d.venues||[]).map(x=>[nV(x),x]));
   ops.forEach(o=>{ if(o.t==="s"){ o.on?S.add(o.k):S.delete(o.k); } else { const M=o.t==="a"?A:V, k=o.t==="a"?nA(o.k):nV(o.k); o.on?M.set(k,o.k):M.delete(k); } });
   return {stars:[...S].sort(), artists:[...A.values()].sort((a,b)=>a.localeCompare(b,"nb")), venues:[...V.values()].sort((a,b)=>a.localeCompare(b,"nb"))}; }
@@ -370,7 +370,7 @@ async function favPull(){ const r=await ghFetch("GET"); favPulled=Date.now();
   if(!r.ok) throw {status:r.status};
   const j=await r.json(); let d={}; try{ d=JSON.parse(b64d(j.content||""))||{}; }catch(e){} return {d,sha:j.sha}; }
 let favBusy=false, favAgain=false;
-async function favSync(){ if(!FAV_WEB) return; if(favBusy){ favAgain=true; return; } favBusy=true;
+async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=true; return; } favBusy=true;
   try{ for(let tries=0;tries<4;tries++){
       const {d,sha}=await favPull();
       const remote={stars:Array.isArray(d.stars)?d.stars:[],artists:Array.isArray(d.artists)?d.artists:[],venues:Array.isArray(d.venues)?d.venues:[]};
@@ -451,13 +451,13 @@ whenEl.addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) r
 const favAny=()=>state.fS||state.fA||state.fV;
 function favOk(g){ return !favAny() || (state.fS&&favs.has(g.id)) || (state.fA&&isFavA(g.artist)) || (state.fV&&isFavV(g)); }
 function festFavOk(x){ return !favAny() || (state.fS&&favs.has(x.id)) || (state.fA&&(x.lineup||[]).some(a=>isFavA(actName(a)))) || (state.fV&&isFavV(x)); }
-const favWarn=()=>FAV_WEB&&(!favToken||favErr==="badkey"||(favErr==="net"&&favPending.length>0));
+const favWarn=()=>FAV_WEB&&!!favToken&&(favErr==="badkey"||(favErr==="net"&&favPending.length>0));
 function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
   const info=box.querySelector(".fi"), row=box.querySelector(".pprow"), help=box.querySelector(".pphelp"), rm=box.querySelector(".linkbtn"), err=box.querySelector(".pperr");
   const n=pl=>pl; const cnt="★ "+favs.size+" "+(favs.size===1?"konsert":"konserter")+" · ♥ "+favA.size+" "+(favA.size===1?"artist":"artister")+" · 📍 "+favV.size+" "+(favV.size===1?"spillested":"spillesteder");
   let t, ok=false, needKey=false;
   if(!FAV_WEB) t="Her lagres de bare i denne utgaven. Åpne Konsertkalender fra Mine sider for å få dem like på alle enheter.";
-  else if(!favToken){ t="Nå lagres de bare på denne enheten. Lim inn GitHub-nøkkelen én gang på hver enhet, så blir de like på mobil og Mac."; needKey=true; }
+  else if(!favToken){ t="Lagres bare på denne enheten. Har du GitHub-nøkkelen til kalenderen, kan du lime den inn her, så blir de like på alle enhetene dine."; needKey=true; }
   else if(favErr==="badkey"){ t="GitHub-nøkkelen virker ikke (feil eller utløpt). Lag en ny og lim den inn her. Endringene dine er lagret her så lenge."; needKey=true; }
   else if(favErr==="net"&&favPending.length) t="Fikk ikke kontakt med GitHub. Endringene er lagret her og sendes når det virker igjen.";
   else { ok=true; const d=favSynced?new Date(favSynced):null; t="✓ Like på alle enheter."+(d?" Sist lagret "+d.toLocaleDateString("nb-NO",{day:"numeric",month:"short"})+" kl. "+pad(d.getHours())+"."+pad(d.getMinutes())+".":""); }
@@ -480,9 +480,9 @@ function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
     catch(e){ err.textContent="Fikk ikke kontakt med GitHub. Prøv igjen."; }
     finally{ go.disabled=false; } });
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); go.click(); } });
-  rm.addEventListener("click",()=>{ favToken=""; store("kk-ghtoken",""); favUi(); });
+  rm.addEventListener("click",()=>{ favToken=""; store("kk-ghtoken",""); favPending=[...favA.values()].map(k=>({t:"a",k,on:true})).concat([...favV.values()].map(k=>({t:"v",k,on:true}))); store("kk-pending",favPending); favBase=null; store("kk-favbase",null); favApply(); favUi(); render(); }); // keep what is marked, now only on this device
   favUi();
-  if(FAV_WEB){ setTimeout(favSync,50); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&Date.now()-favPulled>20000) favSync(); }); }
+  if(FAV_WEB){ if(favToken) setTimeout(favSync,50); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&Date.now()-favPulled>20000) favSync(); }); }
 })();
 $("from").addEventListener("change",e=>{state.from=e.target.value;render();});
 $("to").addEventListener("change",e=>{state.to=e.target.value;render();});
