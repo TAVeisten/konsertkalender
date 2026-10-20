@@ -205,6 +205,28 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 @media (min-width:760px) and (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:#080B10}}
 @media (min-width:760px){:root[data-theme="dark"] body{background:#080B10}}
 @media (max-width:620px){.selects{grid-template-columns:repeat(2,minmax(0,1fr))}.selects .fld:first-child{grid-column:1/-1}}
+
+/* favourites: stars (single concerts), hearts (artists), pins (venues) */
+:root{--heart:#C2185B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--heart:#FF7AA8}}
+:root[data-theme="dark"]{--heart:#FF7AA8}
+.chip.fa[aria-pressed="true"]{background:var(--heart);border-color:var(--heart);color:#fff}
+.ftog{font:inherit;font-size:18px;line-height:1;background:none;border:0;padding:3px 6px;margin-left:2px;cursor:pointer;color:var(--muted);opacity:.6;vertical-align:-1px}
+.ftog[aria-pressed="true"]{opacity:1;color:var(--heart)}
+.ftog.vt{font-size:13px;filter:grayscale(1);opacity:.45;padding:3px 5px}
+.ftog.vt[aria-pressed="true"]{filter:none;opacity:1}
+.gig.isfav{box-shadow:inset 4px 0 0 var(--heart)}
+.lineup .lf{font-weight:700;color:var(--heart)}
+.idx li{display:flex;gap:6px;min-width:0}
+.idx li>button:first-child{flex:1 1 auto;min-width:0}
+.idx li>.ftog{flex:0 0 46px;margin:0;padding:0;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.idx li>.ftog.vt{font-size:16px}
+.chip.pinfav{border-color:var(--heart)}
+.chip.pinfav[aria-pressed="true"]{background:var(--heart);border-color:var(--heart);color:#fff}
+.gearpanel{grid-template-columns:minmax(0,1fr)}
+.favsync{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:8px;border-top:1px solid var(--line);padding-top:12px;margin-top:2px}
+.favsync .pprow input{font-size:16px}
+.favsync .favok{color:var(--ink);font-weight:600}
 @media (max-width:520px){
   .gig{grid-template-columns:52px minmax(0,1fr);gap:10px}
   .actions{grid-column:2;justify-content:flex-start;gap:4px}
@@ -219,7 +241,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
     <button id="gear" class="gear" type="button" aria-label="Innstillinger" aria-haspopup="true" aria-expanded="false" title="Innstillinger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="gl">Innstillinger</span></button></div>
     <div id="gearPanel" class="panel gearpanel" hidden><h2>Innstillinger</h2><p>Når denne er på, vises hver artist som spiller på en festival som en egen konsert i listen, på dagen de spiller. Slå den av for å se bare vanlige konserter. Festivalene finner du alltid under Festivaler.</p></div>
     <h1>Konsert<span>kalender</span></h1>
-    <p class="sub">Kommende konserter med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>
+    <p class="sub">Kommende konserter med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b> Trykk ♡ ved en artist eller 📍 ved et spillested for å gjøre dem til favoritter.</p>
     <div class="updated">Sist oppdatert <b id="upd">tirsdag 20.10.2026 kl. 11.41</b></div>
     <div class="news" id="news" role="button" tabindex="0" aria-expanded="false" title="Trykk for å se hele"><span class="nl">Nytt i dag</span><span class="nt" id="sum">75 nye konserter · 20 tributekonserter · Djangofestivalen: 6 nye artister</span></div>
   </header>
@@ -255,7 +277,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
   <footer>
     <span>Datoer kan endre seg, sjekk alltid hos arrangøren før du kjøper.</span>
     <span>«Billetter» går til spillestedets egen side der vi kjenner den. «Finn billetter» åpner et nettsøk etter konserten. Avstand regnes i luftlinje fra posisjonen du har limt inn, eller fra sentrum av hjemstedet eller bydelen du velger, til spillestedet (omtrentlig posisjon), eller til sentrum av byen når spillestedets posisjon ikke er lagt inn ennå.</span>
-    <span>Hjemsted og stjerner huskes til neste gang du åpner appen.</span>
+    <span>Hjemsted huskes til neste gang du åpner appen. Stjerner og favoritter lagres i en felles fil, så de er like på mobil og Mac når GitHub-nøkkelen er lagt inn under Innstillinger.</span>
   </footer>
 </div>
 
@@ -301,8 +323,68 @@ function store(k,v){ try{ v===undefined ? null : localStorage.setItem(k,JSON.str
 function load(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
 
 let favs = new Set(load("kk-favs",[]));
+// Favourites: stars (single concerts), favourite artists and favourite venues. On the website they are kept in
+// favoritter.json in the GitHub repo, so every device shows the same. Changes are queued as small operations
+// ("pending") and written with the GitHub key stored on this device; without a key they stay on this device.
+const FAV_API="https://api.github.com/repos/TAVeisten/konsertkalender/contents/favoritter.json";
+const FAV_WEB=/github\.io$/.test(location.hostname);
+const nA=x=>String(x||"").normalize("NFKC").toLowerCase().replace(/^the\s+/,"").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+const nV=x=>String(x||"").normalize("NFKC").toLowerCase().trim();
+const favA=new Map(), favV=new Map();
+let favBase=load("kk-favbase",null), favPending=load("kk-pending",[]), favToken=load("kk-ghtoken",""), favErr="", favSynced=load("kk-synced",""), favPulled=0;
+function opsOn(d,ops){ const S=new Set(d.stars||[]), A=new Map((d.artists||[]).map(x=>[nA(x),x])), V=new Map((d.venues||[]).map(x=>[nV(x),x]));
+  ops.forEach(o=>{ if(o.t==="s"){ o.on?S.add(o.k):S.delete(o.k); } else { const M=o.t==="a"?A:V, k=o.t==="a"?nA(o.k):nV(o.k); o.on?M.set(k,o.k):M.delete(k); } });
+  return {stars:[...S].sort(), artists:[...A.values()].sort((a,b)=>a.localeCompare(b,"nb")), venues:[...V.values()].sort((a,b)=>a.localeCompare(b,"nb"))}; }
+function favApply(){ const d=opsOn(favBase||{stars:load("kk-favs",[])}, favPending);
+  favs.clear(); d.stars.forEach(x=>favs.add(x)); favA.clear(); d.artists.forEach(x=>favA.set(nA(x),x)); favV.clear(); d.venues.forEach(x=>favV.set(nV(x),x));
+  store("kk-favs",d.stars); }
+favApply();
+// artist match: same name, or the favourite's name as whole words inside a longer act name ("Bigbang – akustisk")
+function favArtistKey(name){ const n=nA(name); if(favA.has(n)) return n; const s=" "+n+" ";
+  for(const k of favA.keys()){ if(k.length>=4 && s.includes(" "+k+" ")) return k; } return null; }
+const isFavA=name=>!!favArtistKey(name);
+const isFavV=x=>favV.has(nV(x.venue+"|"+x.city));
+function favOp(t,k,on,silent){ favPending=favPending.filter(o=>!(o.t===t&&(t==="a"?nA(o.k)===nA(k):t==="v"?nV(o.k)===nV(k):o.k===k))); favPending.push({t,k,on});
+  store("kk-pending",favPending); favApply(); if(t==="s"&&typeof savePrefs==="function") savePrefs();
+  if(!silent){ render(); if(typeof favUi==="function") favUi(); }
+  if(FAV_WEB&&favToken){ clearTimeout(favOp.t); favOp.t=setTimeout(favSync,700); } }
+function favClick(b){ if(b.dataset.fa!=null){ const key=favArtistKey(b.dataset.fa); if(key) favOp("a",favA.get(key),false); else favOp("a",b.dataset.fa,true); }
+  else if(b.dataset.fv!=null){ const v=b.dataset.fv, on=favV.has(nV(v)); favOp("v",on?favV.get(nV(v)):v,!on); }
+  else if(b.dataset.id!=null){ favOp("s",b.dataset.id,!favs.has(b.dataset.id)); } }
+const b64e=x=>{ const u=new TextEncoder().encode(x); let r=""; for(let i=0;i<u.length;i+=8192) r+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(r); };
+const b64d=x=>new TextDecoder().decode(Uint8Array.from(atob(String(x).replace(/\s/g,"")),c=>c.charCodeAt(0)));
+async function ghFetch(method,body,token){ const h={"Accept":"application/vnd.github+json"}, tk=token===undefined?favToken:token; if(tk) h.Authorization="Bearer "+tk;
+  if(body) h["Content-Type"]="application/json";
+  const c=new AbortController(), tm=setTimeout(()=>c.abort(),15000);
+  try{ return await fetch(FAV_API+(method==="GET"?"?ref=main":""),{method,headers:h,body:body?JSON.stringify(body):undefined,cache:"no-store",signal:c.signal}); }
+  finally{ clearTimeout(tm); } }
+async function favPull(){ const r=await ghFetch("GET"); favPulled=Date.now();
+  if(r.status===404) return {d:{},sha:null};
+  if(!r.ok) throw {status:r.status};
+  const j=await r.json(); let d={}; try{ d=JSON.parse(b64d(j.content||""))||{}; }catch(e){} return {d,sha:j.sha}; }
+let favBusy=false, favAgain=false;
+async function favSync(){ if(!FAV_WEB) return; if(favBusy){ favAgain=true; return; } favBusy=true;
+  try{ for(let tries=0;tries<4;tries++){
+      const {d,sha}=await favPull();
+      const remote={stars:Array.isArray(d.stars)?d.stars:[],artists:Array.isArray(d.artists)?d.artists:[],venues:Array.isArray(d.venues)?d.venues:[]};
+      if(!favBase){ // first time on this device: bring its own stars along into the shared file
+        const own=load("kk-favs",[]).filter(k=>!remote.stars.includes(k)&&!favPending.some(o=>o.t==="s"&&o.k===k));
+        if(own.length){ favPending=own.map(k=>({t:"s",k,on:true})).concat(favPending); store("kk-pending",favPending); } }
+      favBase=remote; store("kk-favbase",favBase);
+      if(!favPending.length){ favErr=""; break; }
+      if(!favToken){ favErr="nokey"; break; }
+      const sent=favPending.slice(), nd=opsOn(remote,sent);
+      if(JSON.stringify(nd)===JSON.stringify(opsOn(remote,[]))){ favPending=favPending.slice(sent.length); store("kk-pending",favPending); favErr=""; break; }
+      const r=await ghFetch("PUT",Object.assign({message:"Favoritter oppdatert",content:b64e(JSON.stringify(nd,null,1)+"\n"),branch:"main"},sha?{sha}:{}));
+      if(r.status===409||r.status===422) continue; // changed from another device meanwhile: read again and retry
+      if(!r.ok) throw {status:r.status};
+      favBase=nd; store("kk-favbase",nd); favPending=favPending.slice(sent.length); store("kk-pending",favPending);
+      favErr=""; favSynced=new Date().toISOString(); store("kk-synced",favSynced); break; }
+  }catch(e){ favErr=e&&(e.status===401||e.status===403||e.status===404)?"badkey":"net"; }
+  favBusy=false; favApply(); if(typeof favUi==="function") favUi(); render();
+  if(favAgain){ favAgain=false; favSync(); } }
 const state = { showFest: load("kk-showfest",true), view:"list", q:"", when:"all", from:"", to:"", place:"", genre:"", dist:"",
-  venue:"", artist:"", onlyFav:false, home: load("kk-home",""), calMonth:null, calDay:"" };
+  venue:"", artist:"", onlyFav:false, fS:false, fA:false, fV:false, home: load("kk-home",""), calMonth:null, calDay:"" };
 
 // distance
 function km(a,b){ const R=6371,r=x=>x*Math.PI/180; const dLa=r(b[0]-a[0]), dLo=r(b[1]-a[1]);
@@ -332,14 +414,51 @@ const $ = id => document.getElementById(id);
 const whenEl=$("when");
 [["all","Alle"],["today","I kveld"],["weekend","Helgen"],["week","7 dager"],["30","30 dager"],["custom","Velg datoer"]].forEach(([k,l])=>{
   const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=l; b.dataset.k=k; whenEl.appendChild(b); });
-const favChip=document.createElement("button"); favChip.type="button"; favChip.className="chip fav"; favChip.textContent="★ Mine"; favChip.dataset.k="__fav"; whenEl.appendChild(favChip);
+[["__s","fav","★ Stjerner","Vis konserter du har stjernemerket"],["__a","fa","♥ Artister","Vis konserter med favorittartistene dine"],["__v","fv","📍 Steder","Vis konserter på favorittstedene dine"]].forEach(([k,c,l,t])=>{
+  const b=document.createElement("button"); b.type="button"; b.className="chip "+c; b.textContent=l; b.title=t; b.dataset.k=k; whenEl.appendChild(b); });
 const festChip=document.createElement("button"); festChip.type="button"; festChip.className="chip fsw"; festChip.innerHTML='<span class="sw" aria-hidden="true"></span>Festivalartister <span class="st"></span>'; festChip.dataset.k="__fest"; festChip.title="Vis eller skjul artister som spiller på festivaler"; { const gp=$("gearPanel"); gp.insertBefore(festChip,gp.querySelector("p")); }
 festChip.addEventListener("click",e=>{ e.stopPropagation(); state.showFest=!state.showFest; store("kk-showfest",state.showFest); render(); });
 { const gear=$("gear"), gp=$("gearPanel"), closeG=()=>{ gp.hidden=true; gear.setAttribute("aria-expanded","false"); };
   gear.addEventListener("click",e=>{ e.stopPropagation(); gp.hidden=!gp.hidden; gear.setAttribute("aria-expanded",String(!gp.hidden)); });
   gp.addEventListener("click",e=>e.stopPropagation()); document.addEventListener("pointerdown",e=>{ if(!gp.hidden && !gp.contains(e.target) && !gear.contains(e.target)) closeG(); },true); document.addEventListener("click",closeG); document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeG(); }); }
 whenEl.addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return;
-  if(b.dataset.k==="__fav") state.onlyFav=!state.onlyFav; else if(b.dataset.k==="__fest"){ state.showFest=!state.showFest; store("kk-showfest",state.showFest); } else state.when=b.dataset.k; render(); });
+  if(b.dataset.k==="__s") state.fS=!state.fS; else if(b.dataset.k==="__a") state.fA=!state.fA; else if(b.dataset.k==="__v") state.fV=!state.fV; else if(b.dataset.k==="__fest"){ state.showFest=!state.showFest; store("kk-showfest",state.showFest); } else state.when=b.dataset.k; render(); });
+const favAny=()=>state.fS||state.fA||state.fV;
+function favOk(g){ return !favAny() || (state.fS&&favs.has(g.id)) || (state.fA&&isFavA(g.artist)) || (state.fV&&isFavV(g)); }
+function festFavOk(x){ return !favAny() || (state.fS&&favs.has(x.id)) || (state.fA&&(x.lineup||[]).some(a=>isFavA(actName(a)))) || (state.fV&&isFavV(x)); }
+const favWarn=()=>FAV_WEB&&(!favToken||favErr==="badkey"||(favErr==="net"&&favPending.length>0));
+function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
+  const info=box.querySelector(".fi"), row=box.querySelector(".pprow"), help=box.querySelector(".pphelp"), rm=box.querySelector(".linkbtn"), err=box.querySelector(".pperr");
+  const n=pl=>pl; const cnt="★ "+favs.size+" "+(favs.size===1?"konsert":"konserter")+" · ♥ "+favA.size+" "+(favA.size===1?"artist":"artister")+" · 📍 "+favV.size+" "+(favV.size===1?"spillested":"spillesteder");
+  let t, ok=false, needKey=false;
+  if(!FAV_WEB) t="Her lagres de bare i denne utgaven. Åpne Konsertkalender fra Mine sider for å få dem like på alle enheter.";
+  else if(!favToken){ t="Nå lagres de bare på denne enheten. Lim inn GitHub-nøkkelen én gang på hver enhet, så blir de like på mobil og Mac."; needKey=true; }
+  else if(favErr==="badkey"){ t="GitHub-nøkkelen virker ikke (feil eller utløpt). Lag en ny og lim den inn her. Endringene dine er lagret her så lenge."; needKey=true; }
+  else if(favErr==="net"&&favPending.length) t="Fikk ikke kontakt med GitHub. Endringene er lagret her og sendes når det virker igjen.";
+  else { ok=true; const d=favSynced?new Date(favSynced):null; t="✓ Like på alle enheter."+(d?" Sist lagret "+d.toLocaleDateString("nb-NO",{day:"numeric",month:"short"})+" kl. "+pad(d.getHours())+"."+pad(d.getMinutes())+".":""); }
+  info.replaceChildren(el("span",ok?"favok":null,t), document.createElement("br"), document.createTextNode(cnt));
+  row.hidden=help.hidden=!needKey; rm.hidden=!(FAV_WEB&&favToken);
+  $("gear").classList.toggle("dot",!state.showFest||favWarn()); }
+(function(){ const gp=$("gearPanel"), box=el("div","favsync"); box.id="favSync";
+  box.append(el("h2",null,"Stjerner og favoritter"), el("p","fi",""));
+  const row=el("div","pprow"), inp=document.createElement("input"); inp.type="password"; inp.autocomplete="off"; inp.spellcheck=false; inp.placeholder="Lim inn GitHub-nøkkel"; inp.setAttribute("aria-label","GitHub-nøkkel");
+  const go=el("button","ppgo","Lagre"); go.type="button"; row.append(inp,go);
+  const err=el("p","pperr",""); err.setAttribute("role","status");
+  const help=el("p","pphelp"); help.innerHTML='Lag nøkkelen på <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com</a>: velg bare repoet <b>konsertkalender</b> og tilgangen <b>Contents: Read and write</b>. Bruk samme nøkkel på mobil og Mac.';
+  const rm=el("button","linkbtn","Fjern nøkkelen fra denne enheten"); rm.type="button"; rm.style.justifySelf="start";
+  box.append(row,err,help,rm); gp.appendChild(box);
+  go.addEventListener("click",async()=>{ const tk=inp.value.trim(); if(!tk) return;
+    if(!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(tk)){ err.textContent="Det ser ikke ut som en GitHub-nøkkel. Den begynner med github_pat_."; return; }
+    go.disabled=true; err.textContent="Sjekker nøkkelen …";
+    try{ const r=await ghFetch("GET",null,tk); if(r.status===401||r.status===403){ err.textContent="GitHub godtok ikke nøkkelen. Sjekk at du kopierte hele, og at den gjelder konsertkalender."; return; }
+      favToken=tk; store("kk-ghtoken",tk); inp.value=""; err.textContent=""; favErr=""; await favSync(); }
+    catch(e){ err.textContent="Fikk ikke kontakt med GitHub. Prøv igjen."; }
+    finally{ go.disabled=false; } });
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); go.click(); } });
+  rm.addEventListener("click",()=>{ favToken=""; store("kk-ghtoken",""); favUi(); });
+  favUi();
+  if(FAV_WEB){ setTimeout(favSync,50); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&Date.now()-favPulled>20000) favSync(); }); }
+})();
 $("from").addEventListener("change",e=>{state.from=e.target.value;render();});
 $("to").addEventListener("change",e=>{state.to=e.target.value;render();});
 
@@ -507,11 +626,12 @@ $("home").addEventListener("change",e=>{ state.home=e.target.value; store("kk-ho
 if(state.home==="__me"&&!meLoc){ state.home=""; $("home").value=""; }
 $("q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase(); render();});
 document.querySelector(".tabs").addEventListener("click",e=>{ const b=e.target.closest(".tab"); if(!b) return; state.view=b.dataset.view; render(); });
-$("pins").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; state[b.dataset.k]=""; render(); });
+$("pins").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; if(b.dataset.fa!=null||b.dataset.fv!=null){ favClick(b); return; } state[b.dataset.k]=""; render(); });
 
 const out=$("out");
 out.addEventListener("click",e=>{
-  const s=e.target.closest(".star"); if(s){ const id=s.dataset.id; favs.has(id)?favs.delete(id):favs.add(id); store("kk-favs",[...favs]); savePrefs(); render(); return; }
+  const s=e.target.closest(".star"); if(s){ favClick(s); return; }
+  const f=e.target.closest(".ftog"); if(f){ favClick(f); return; }
   const v=e.target.closest("[data-venue]"); if(v){ state.venue=v.dataset.venue; state.view="list"; render(); window.scrollTo({top:0}); return; }
   const a=e.target.closest("[data-artist]"); if(a){ state.artist=a.dataset.artist; state.view="list"; render(); window.scrollTo({top:0}); return; }
   const d=e.target.closest("[data-day]"); if(d && !d.classList.contains("past")){ state.calDay = state.calDay===d.dataset.day ? "" : d.dataset.day; render(); return; }
@@ -529,7 +649,7 @@ function filtered(opts={}){
     (!state.genre || g.genre===state.genre) &&
     (!state.venue || g.venue+"|"+g.city===state.venue) &&
     (!state.artist || g.artist===state.artist) &&
-    (!state.onlyFav || favs.has(g.id)) &&
+    favOk(g) &&
     (!state.q || (g.artist+" "+g.venue+" "+g.city+" "+g.county).toLowerCase().includes(state.q)) &&
     (maxD===null || (distOf(g)??1e9) <= maxD)
   );
@@ -549,13 +669,18 @@ function gigRow(g){
   const info=el("div","info");
   const ab=el("button","artist",g.artist); ab.type="button"; ab.dataset.artist=g.artist; ab.title="Vis alle konserter med "+g.artist;
   const w=el("p","where"); const vb=el("button","venue",g.venue); vb.type="button"; vb.dataset.venue=g.venue+"|"+g.city;
-  w.append(vb, document.createTextNode(" · "+g.city));
+  const vk=g.venue+"|"+g.city, von=favV.has(nV(vk)); const vt=el("button","ftog vt","📍"); vt.type="button"; vt.dataset.fv=vk; vt.setAttribute("aria-pressed",String(von));
+  vt.setAttribute("aria-label",(von?"Fjern ":"Legg til ")+g.venue+(von?" fra favorittsteder":" som favorittsted")); vt.title=von?"Favorittsted":"Gjør til favorittsted";
+  w.append(vb, vt, document.createTextNode(" · "+g.city));
   const meta=el("div","meta"); meta.append(el("span","tag",g.genre));
   if(g.fest && g.end!==g.date){ const [ey,em,ed]=g.end.split("-").map(Number); meta.append(el("span","km","Varer til "+ed+". "+MONTHS[em-1])); }
   const k=distOf(g); if(k!==null) meta.append(el("span","km", distLabel(g,k)));
   if(g.festRef){ meta.append(el("span","festtag","Festival: "+g.festRef.name)); if(g.dayUnknown) meta.append(el("span",null,"Dag ikke kjent ennå ("+fmtRange(g.festRef.start,g.festRef.end)+")")); }
   else meta.append(el("span",null,"Kilde: "+g.source));
-  info.append(ab,w,meta);
+  const fk=favArtistKey(g.artist); const at=el("button","ftog at",fk?"♥":"♡"); at.type="button"; at.dataset.fa=g.artist; at.setAttribute("aria-pressed",String(!!fk));
+  at.setAttribute("aria-label",(fk?"Fjern ":"Legg til ")+g.artist+(fk?" fra favorittartister":" som favorittartist")); at.title=fk?"Favorittartist":"Gjør til favorittartist";
+  if(fk||von) li.classList.add("isfav");
+  info.append(ab,at,w,meta);
   const act=el("div","actions");
   const on=favs.has(g.id); const s=el("button","star",on?"★":"☆"); s.type="button"; s.dataset.id=g.id; s.setAttribute("aria-pressed",String(on)); s.setAttribute("aria-label",(on?"Fjern ":"Merk ")+g.artist);
   act.append(s, ticketLink(g));
@@ -563,7 +688,7 @@ function gigRow(g){
 }
 
 function renderList(list, grouped=true){
-  if(!list.length){ out.appendChild(el("p","empty", state.onlyFav ? "Ingen stjernemerkede konserter her ennå. Trykk ☆ på en konsert for å lagre den." : "Ingen konserter passer filtrene. Prøv å fjerne noen.")); return; }
+  if(!list.length){ out.appendChild(el("p","empty", favAny() ? "Ingen konserter med favorittene dine her ennå. Trykk ☆ på en konsert, ♡ ved en artist eller 📍 ved et spillested." : "Ingen konserter passer filtrene. Prøv å fjerne noen.")); return; }
   let cur=null, ol=null;
   if(!grouped){ ol=el("ol","list"); out.appendChild(ol); }
   for(const g of list){
@@ -625,7 +750,10 @@ function renderIndex(kind){
     const [y,m,d]=e.next.split("-").map(Number);
     nm.appendChild(el("span","sm",(kind==="venues"?e.sub:[...e.sub].join(", "))+" · neste "+d+". "+MONTHS[m-1].slice(0,3)));
     b.append(nm, el("span","ct",e.n+(e.n===1?" konsert":" konserter")));
-    li.appendChild(b); ul.appendChild(li);
+    li.appendChild(b);
+    const on=kind==="venues"?favV.has(nV(key)):isFavA(key); const t=el("button","ftog"+(kind==="venues"?" vt":" at"),kind==="venues"?"📍":(on?"♥":"♡")); t.type="button";
+    if(kind==="venues") t.dataset.fv=key; else t.dataset.fa=key; t.setAttribute("aria-pressed",String(on));
+    t.setAttribute("aria-label",(on?"Fjern ":"Legg til ")+(kind==="venues"?key.split("|")[0]:key)+(on?" fra favoritter":" som favoritt")); li.appendChild(t); ul.appendChild(li);
   });
   out.appendChild(ul);
 }
@@ -644,7 +772,7 @@ function renderFests(){
       acts:(x.lineup||[]).filter(a=>!state.genre||actG(a)===state.genre)}))
     .filter(x => x.end>=todayStr && (!state.genre || x.acts.length) && x.end>=f && x.start<=t &&
       inPlace(x) &&
-      (!state.onlyFav || favs.has(x.id)) &&
+      festFavOk(x) &&
       (!state.q || (x.name+" "+x.venue+" "+x.city+" "+x.county+" "+x.lineup.map(actName).join(" ")).toLowerCase().includes(state.q)) &&
       (maxD===null || (distOf(x)??1e9) <= maxD))
     .sort((a,b)=>a.start.localeCompare(b.start));
@@ -662,7 +790,7 @@ function renderFests(){
     meta.append(el("span",null,"Kilde: "+SOURCES[x.src])); info.appendChild(meta);
     if(x.acts.length){ const p=el("p","lineup");
       p.appendChild(el("b",null, state.genre ? state.genre+" på line-upen ("+x.acts.length+" av "+x.lineup.length+")" : x.lineupComplete?"Line-up":"Kunngjort så langt ("+x.lineup.length+")"));
-      x.acts.forEach((a,i)=>{ if(i) p.appendChild(document.createTextNode(" · ")); p.appendChild(document.createTextNode(actName(a)));
+      x.acts.forEach((a,i)=>{ if(i) p.appendChild(document.createTextNode(" · ")); const an=actName(a); p.appendChild(isFavA(an)?el("span","lf","♥ "+an):document.createTextNode(an));
         const g=actG(a); if(g && !state.genre) p.appendChild(el("span","lg",g)); });
       info.appendChild(p); }
     else info.appendChild(el("p","lineup none","Line-up er ikke sluppet ennå."));
@@ -679,14 +807,16 @@ function render(){
   placePanel.querySelectorAll(".popt").forEach(b=>b.setAttribute("aria-current",String(b.dataset.place===state.place)));
   syncHome();
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.view===state.view)));
-  festChip.querySelector(".st").textContent=state.showFest?"PÅ":"AV"; festChip.setAttribute("aria-pressed",String(state.showFest)); $("gear").classList.toggle("dot",!state.showFest); $("gear").title=state.showFest?"Innstillinger":"Innstillinger – festivalartister er skjult";
-  [...whenEl.children].forEach(b=>b.setAttribute("aria-pressed", b.dataset.k==="__fav"?String(state.onlyFav):b.dataset.k==="__fest"?String(state.showFest):String(b.dataset.k===state.when)));
+  festChip.querySelector(".st").textContent=state.showFest?"PÅ":"AV"; festChip.setAttribute("aria-pressed",String(state.showFest)); $("gear").classList.toggle("dot",!state.showFest||favWarn()); $("gear").title=state.showFest?"Innstillinger":"Innstillinger – festivalartister er skjult";
+  [...whenEl.children].forEach(b=>b.setAttribute("aria-pressed", b.dataset.k==="__s"?String(state.fS):b.dataset.k==="__a"?String(state.fA):b.dataset.k==="__v"?String(state.fV):b.dataset.k==="__fest"?String(state.showFest):String(b.dataset.k===state.when)));
   $("dates").hidden = state.when!=="custom";
   whenEl.style.display = state.view==="cal" ? "none" : "";
   const dist=$("dist"); dist.disabled=!state.home; if(!state.home){ dist.value=""; state.dist=""; dist.options[0].textContent="Velg hjemsted først"; } else dist.options[0].textContent="Alle avstander";
   const pins=$("pins"); pins.replaceChildren();
-  if(state.venue){ const b=el("button","chip pin","Spillested: "+state.venue.split("|")[0]+"  ✕"); b.type="button"; b.dataset.k="venue"; pins.appendChild(b); }
-  if(state.artist){ const b=el("button","chip pin","Artist: "+state.artist+"  ✕"); b.type="button"; b.dataset.k="artist"; pins.appendChild(b); }
+  if(state.venue){ const b=el("button","chip pin","Spillested: "+state.venue.split("|")[0]+"  ✕"); b.type="button"; b.dataset.k="venue"; pins.appendChild(b);
+    const on=favV.has(nV(state.venue)); const f=el("button","chip pinfav",on?"📍 Favorittsted":"📍 Gjør til favoritt"); f.type="button"; f.dataset.fv=state.venue; f.setAttribute("aria-pressed",String(on)); pins.appendChild(f); }
+  if(state.artist){ const b=el("button","chip pin","Artist: "+state.artist+"  ✕"); b.type="button"; b.dataset.k="artist"; pins.appendChild(b);
+    const on=isFavA(state.artist); const f=el("button","chip pinfav",on?"♥ Favorittartist":"♡ Gjør til favoritt"); f.type="button"; f.dataset.fa=state.artist; f.setAttribute("aria-pressed",String(on)); pins.appendChild(f); }
   pins.hidden=!pins.children.length;
   out.replaceChildren();
   if(state.view==="cal") return renderCal();
@@ -713,7 +843,7 @@ function savePrefs(){ if(!prefRef) return; clearTimeout(savePrefs.t);
   else if(meLoc && (!d || !Array.isArray(d.loc) || d.loc[0]!==meLoc[0] || d.loc[1]!==meLoc[1])) changed=true;
   if(d && d.home && (HOMES[d.home]||(d.home==="__me"&&meLoc)) && !state.home){ state.home=d.home; $("home").value=d.home; store("kk-home",d.home); }
   else if(state.home && (!d || d.home!==state.home)) changed=true;
-  if(d && Array.isArray(d.favs)){ const before=favs.size; d.favs.forEach(f=>favs.add(f)); if(favs.size!==d.favs.length) changed=true; if(favs.size!==before) store("kk-favs",[...favs]); }
+  if(d && Array.isArray(d.favs)){ d.favs.forEach(f=>{ if(!favs.has(f)) favOp("s",f,true,true); }); if(favs.size!==d.favs.length) changed=true; }
   else if(favs.size) changed=true;
   if(changed) savePrefs();
   render();

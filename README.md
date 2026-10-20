@@ -8,4 +8,7 @@ Kommende konserter i Norge, med hovedvekt på Oslo-området, Bergen, Trondheim o
 - `tools/update.py` gjør det faste arbeidet i den daglige oppdateringen: leser dataene i siden, fletter inn nye
   konserter og festivaler, fjerner dubletter og passerte konserter, holder orden på spillestedenes posisjoner,
   lager sammendraget og tidsstempelet og sjekker at skriptene i siden er gyldige. Se toppen av filen for bruk.
+- `favoritter.json` er stjernene, favorittartistene og favorittstedene. Siden skriver den selv (med en GitHub-nøkkel
+  som legges inn én gang per enhet under Innstillinger), så de er like på alle enheter. Den daglige oppdateringen
+  leser den og lager seksjonen «Nytt fra favorittene» øverst i sammendraget.
 - Konsertlisten oppdateres automatisk hver dag.

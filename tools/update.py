@@ -305,6 +305,7 @@ def cmd_add(path):
                 f["lineup"].append(a)
                 byname[norm(a["n"])] = a
                 na += 1
+                st.setdefault("fest_added", []).append([f["name"], a["n"], f["venue"], f["city"], a.get("d", ""), f["start"], f["end"]])
             else:
                 if a.get("d") and a["d"] != old.get("d"):
                     old["d"] = a["d"]
@@ -409,6 +410,34 @@ def cap(items, n=8):
     return items if len(items) <= n else items[:n - 1] + ["… og %d til" % (len(items) - n + 1)]
 
 
+FAVS = os.path.join(ROOT, "favoritter.json")
+
+
+def fav_words(s):
+    """Same normalising as the page: lower case, leading "The" dropped, everything but letters/digits -> one space."""
+    s = unicodedata.normalize("NFKC", str(s)).lower().strip()
+    s = re.sub(r"^the\s+", "", s)
+    return " ".join(re.findall(r"[^\W_]+", s))
+
+
+def load_favs():
+    """Favourite artists and venues from favoritter.json (written by the page on every device)."""
+    try:
+        f = json.load(open(FAVS, encoding="utf-8"))
+    except Exception:
+        return [], set()
+    arts = [fav_words(a) for a in f.get("artists") or [] if fav_words(a)]
+    vens = {str(v).strip().lower() for v in f.get("venues") or []}
+    return arts, vens
+
+
+def fav_artist(name, arts):
+    """Same rule as the page: same name, or the favourite's name as whole words inside a longer act name."""
+    n = fav_words(name)
+    s = " " + n + " "
+    return any(k == n or (len(k) >= 4 and " " + k + " " in s) for k in arts)
+
+
 def check_scripts(path):
     s = open(path, encoding="utf-8").read()
     blocks = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", s, re.S)
@@ -478,7 +507,28 @@ def cmd_finish(failed, highlights):
         pos_lines.append("Ikke funnet denne gangen: " + "; ".join(k.replace("|", ", ") for k in pos["notfound"][:5])
                          + (" … og %d til" % (len(pos["notfound"]) - 5) if len(pos["notfound"]) > 5 else ""))
 
+    arts, vens = load_favs()
+    fav_items = []
+    for a in added:
+        if fav_artist(a["artist"], arts):
+            fav_items.append("♥ %s (%s, %s, %s)" % (a["artist"], a["venue"], a["city"], short_date(a["date"])))
+        elif (a["venue"] + "|" + a["city"]).lower() in vens:
+            fav_items.append("📍 %s: %s (%s)" % (a["venue"], a["artist"], short_date(a["date"])))
+    for fname, artist, fven, fcity, day, fs, fe in st.get("fest_added", []):
+        if fname not in alive:
+            continue
+        if fav_artist(artist, arts):
+            fav_items.append("♥ %s spiller på %s (%s)" % (artist, fname, short_date(day) if day else short_date(fs) + "–" + short_date(fe)))
+        elif (fven + "|" + fcity).lower() in vens:
+            fav_items.append("📍 %s: %s (%s)" % (fname, artist, short_date(day) if day else "dag ikke kjent"))
+    for name, txt in st["fest_new"]:
+        f = next((x for x in d["FESTS"] if x["name"] == name), None)
+        if f and (f["venue"] + "|" + f["city"]).lower() in vens:
+            fav_items.append("📍 Ny festival på %s: %s" % (f["venue"], txt))
+
     secs = []
+    if fav_items:
+        secs.append({"t": "Nytt fra favorittene", "items": cap(fav_items)})
     if added or removed:
         items = []
         if added:
@@ -521,6 +571,8 @@ def cmd_finish(failed, highlights):
         head = "Ingen nye konserter i dag · %s: %s" % (name, pl(n, "ny artist", "nye artister"))
     else:
         head = "Ingen nye konserter i dag"
+    if fav_items:
+        head = "%s fra favorittene · %s" % (pl(len(fav_items), "nyhet", "nyheter"), head)
     d["SUMMARY"] = {"head": head, "sections": secs}
 
     n = now()
