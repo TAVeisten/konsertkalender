@@ -369,13 +369,16 @@ let favToken=load("kk-ghtoken",""), favBase=favToken?load("kk-favbase",null):nul
 const FAV_APP=!FAV_WEB&&typeof FAVS==="object"&&FAVS?FAVS:null;
 if(FAV_APP){ favPending=favPending.filter(o=>o.t==="s");
   if(!load("kk-appmig",false)){ favPending=favPending.concat(load("kk-favs",[]).map(k=>({t:"s",k,on:true}))); store("kk-appmig",true); }
-  store("kk-pending",favPending); favBase={stars:FAV_APP.stars||[],artists:FAV_APP.artists||[],venues:FAV_APP.venues||[]}; }
+  store("kk-pending",favPending); favBase={stars:FAV_APP.stars||[],artists:FAV_APP.artists||[],venues:FAV_APP.venues||[],seen:+FAV_APP.seen||0}; }
 function favToast(t){ let n=document.getElementById("favToast"); if(!n){ n=el("div","toast"); n.id="favToast"; n.setAttribute("role","status"); document.body.appendChild(n); }
   n.textContent=t; n.hidden=false; clearTimeout(favToast.t); favToast.t=setTimeout(()=>{ n.hidden=true; },4500); }
 function opsOn(d,ops){ const S=new Set(d.stars||[]), A=new Map((d.artists||[]).map(x=>[nA(x),x])), V=new Map((d.venues||[]).map(x=>[nV(x),x]));
-  ops.forEach(o=>{ if(o.t==="s"){ o.on?S.add(o.k):S.delete(o.k); } else { const M=o.t==="a"?A:V, k=o.t==="a"?nA(o.k):nV(o.k); o.on?M.set(k,o.k):M.delete(k); } });
-  return {stars:[...S].sort(), artists:[...A.values()].sort((a,b)=>a.localeCompare(b,"nb")), venues:[...V.values()].sort((a,b)=>a.localeCompare(b,"nb"))}; }
+  let seen=+d.seen||0;
+  ops.forEach(o=>{ if(o.t==="n"){ seen=Math.max(seen,+o.k||0); } else if(o.t==="s"){ o.on?S.add(o.k):S.delete(o.k); } else { const M=o.t==="a"?A:V, k=o.t==="a"?nA(o.k):nV(o.k); o.on?M.set(k,o.k):M.delete(k); } });
+  return {stars:[...S].sort(), artists:[...A.values()].sort((a,b)=>a.localeCompare(b,"nb")), venues:[...V.values()].sort((a,b)=>a.localeCompare(b,"nb")),...(seen?{seen}:{})}; }
+let favSeen=0;
 function favApply(){ const d=opsOn(favBase||{stars:load("kk-favs",[])}, favPending);
+  favSeen=d.seen||0;
   favs.clear(); d.stars.forEach(x=>favs.add(x)); favA.clear(); d.artists.forEach(x=>favA.set(nA(x),x)); favV.clear(); d.venues.forEach(x=>favV.set(nV(x),x));
   store("kk-favs",d.stars); }
 favApply();
@@ -389,8 +392,20 @@ const isFavV=x=>favV.has(nV(x.venue+"|"+x.city));
 const NEWD=(typeof ADDED==="object"&&ADDED)||{day:""};
 // day numbers count from 1 Jan 2026 (same as tools/update.py); 0 = came in before this was tracked
 const dayNo=iso=>iso?Math.round((Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))-Date.UTC(2026,0,1))/864e5):0;
-const seenPrev=(()=>{ let sd=load("kk-seenDay",""), sp=load("kk-seenPrev",""); if(NEWD.day&&sd!==NEWD.day){ sp=sd; store("kk-seenPrev",sp); store("kk-seenDay",NEWD.day); } return sp; })();
-const isNewDay=n=>!!n && (seenPrev ? n>dayNo(seenPrev) : n>=dayNo(NEWD.day));
+// What you have seen is shared between devices: on the website through favoritter.json (with the GitHub key), in
+// the Claude app through its own synced storage (plus the website's value from the morning update). A visit keeps
+// the marks it opened with; after 4 seconds on screen they count as seen, so the next visit on any device is clear.
+let prefSeen=0, seenSnap=0, seenMarked=false, seenTimer=0;
+const seenVal=()=>Math.max(+load("kk-seenNo",0)||0, favSeen||0, prefSeen||0);
+function snapSeen(){ seenSnap=seenVal()||(dayNo(NEWD.day)-1); }
+snapSeen();
+function reSnap(){ if(seenMarked) return; const o=seenSnap; snapSeen(); if(o!==seenSnap&&typeof render==="function"){ render(); } }
+function markSeen(){ const v=dayNo(NEWD.day); seenMarked=true; if(!v||v<=seenVal()) return; store("kk-seenNo",v);
+  if(FAV_WEB) favOp("n",v,true,true); else if(typeof savePrefs==="function"){ prefSeen=v; savePrefs(); } }
+function seenClock(){ clearTimeout(seenTimer); if(document.visibilityState==="visible") seenTimer=setTimeout(markSeen,4000); }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ seenMarked=false; snapSeen(); setTimeout(reSnap,1500); if(typeof render==="function") render(); } seenClock(); });
+seenClock();
+const isNewDay=n=>!!n && n>seenSnap;
 const newFav=g=>isNewDay(g.add)&&(isFavA(g.artist)||isFavV(g));
 function newFavCount(){ return gigs.concat(festGigs).filter(g=>(g.end||g.date)>=todayStr&&newFav(g)).length; }
 function favOp(t,k,on,silent){ favPending=favPending.filter(o=>!(o.t===t&&(t==="a"?nA(o.k)===nA(k):t==="v"?nV(o.k)===nV(k):o.k===k))); favPending.push({t,k,on});
@@ -416,7 +431,7 @@ let favBusy=false, favAgain=false;
 async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=true; return; } favBusy=true;
   try{ for(let tries=0;tries<4;tries++){
       const {d,sha}=await favPull();
-      const remote={stars:Array.isArray(d.stars)?d.stars:[],artists:Array.isArray(d.artists)?d.artists:[],venues:Array.isArray(d.venues)?d.venues:[]};
+      const remote={stars:Array.isArray(d.stars)?d.stars:[],artists:Array.isArray(d.artists)?d.artists:[],venues:Array.isArray(d.venues)?d.venues:[],...(+d.seen?{seen:+d.seen}:{})};
       if(!favBase){ // first time on this device: bring its own stars along into the shared file
         const own=load("kk-favs",[]).filter(k=>!remote.stars.includes(k)&&!favPending.some(o=>o.t==="s"&&o.k===k));
         if(own.length){ favPending=own.map(k=>({t:"s",k,on:true})).concat(favPending); store("kk-pending",favPending); } }
@@ -431,7 +446,7 @@ async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=
       favBase=nd; store("kk-favbase",nd); favPending=favPending.slice(sent.length); store("kk-pending",favPending);
       favErr=""; favSynced=new Date().toISOString(); store("kk-synced",favSynced); break; }
   }catch(e){ favErr=e&&(e.status===401||e.status===403||e.status===404)?"badkey":"net"; }
-  favBusy=false; favApply(); if(typeof favUi==="function") favUi(); render();
+  favBusy=false; favApply(); reSnap(); if(typeof favUi==="function") favUi(); render();
   if(favAgain){ favAgain=false; favSync(); } }
 const state = { showFest: load("kk-showfest",true), view:"list", q:"", when:"all", from:"", to:"", place:"", genre:"", dist:"",
   venue:"", artist:"", onlyFav:false, fN:false, fS:false, fA:false, fV:false, home: load("kk-home",""), calMonth:null, calDay:"" };
@@ -938,7 +953,7 @@ function render(){
 // Remember home town and stars across visits (per signed-in viewer; falls back to this browser)
 let prefRef=null;
 function savePrefs(){ if(!prefRef) return; clearTimeout(savePrefs.t);
-  savePrefs.t=setTimeout(()=>{ prefRef.set({home:state.home||"", favs:[...favs], loc:meLoc||null, locLabel:meLabel||""}).catch(()=>{}); },400); }
+  savePrefs.t=setTimeout(()=>{ prefRef.set({home:state.home||"", favs:[...favs], loc:meLoc||null, locLabel:meLabel||"", seen:Math.max(prefSeen||0,+load("kk-seenNo",0)||0)}).catch(()=>{}); },400); }
 (async()=>{ try{
   if(!window.claude || !window.claude.use) return;
   const [db,user]=await Promise.all([claude.use("db"), claude.use("user")]);
@@ -953,6 +968,7 @@ function savePrefs(){ if(!prefRef) return; clearTimeout(savePrefs.t);
   else if(state.home && (!d || d.home!==state.home)) changed=true;
   if(d && Array.isArray(d.favs)){ d.favs.forEach(f=>{ if(!favs.has(f)) favOp("s",f,true,true); }); if(favs.size!==d.favs.length) changed=true; }
   else if(favs.size) changed=true;
+  if(d && +d.seen){ prefSeen=+d.seen; reSnap(); } if(+load("kk-seenNo",0)>(d&&+d.seen||0)) changed=true;
   if(changed) savePrefs();
   render();
 }catch(e){} })();

@@ -432,12 +432,16 @@ def fav_words(s):
 
 
 def fav_file():
-    """favoritter.json as it is in the repo (stars, artists, venues)."""
+    """favoritter.json as it is in the repo (stars, artists, venues, and "seen": the last update day the user has
+    looked at on the website, as a day number – the Claude app starts from it)."""
     try:
         f = json.load(open(FAVS, encoding="utf-8"))
     except Exception:
         f = {}
-    return {k: [x for x in f.get(k) or [] if isinstance(x, str)] for k in ("stars", "artists", "venues")}
+    out = {k: [x for x in f.get(k) or [] if isinstance(x, str)] for k in ("stars", "artists", "venues")}
+    if isinstance(f.get("seen"), int) and f["seen"] > 0:
+        out["seen"] = f["seen"]
+    return out
 
 
 def load_favs():
