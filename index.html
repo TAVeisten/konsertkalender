@@ -268,6 +268,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 .frm{flex:0 0 40px;font:inherit;font-size:15px;line-height:1;background:none;border:0;border-radius:8px;color:var(--muted);cursor:pointer;padding:0}
 .frm:hover,.frm:focus-visible{background:var(--chip);color:var(--ink)}
 .fitem .fst{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:1px}
+.ftrib{justify-self:start;font:inherit;font-size:13px;background:none;border:0;color:var(--blue);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0 4px 8px 34px;margin-top:-4px;text-align:left}
 .fadd{display:grid;gap:8px;max-width:340px;margin:0 0 8px 34px;padding:6px 6px 4px 12px;border-left:2px solid var(--line)}
 .faddl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:6px;border-top:1px solid var(--line)}
 .fadd textarea{display:block;font:inherit;font-size:16px;width:100%;min-height:66px;max-height:190px;resize:none;color:var(--ink);background:var(--surface);border:1px solid var(--muted);border-radius:8px;padding:10px;line-height:1.35}
@@ -415,8 +416,8 @@ favApply();
 // artist match: same name, or the favourite's name as whole words inside a longer act name ("Bigbang – akustisk")
 // Tribute concerts count only for the tribute band itself, never for the artist they pay tribute to: for a tribute
 // act the longer-name match looks only at the band's own name («Bon Scotch (tribute til AC/DC …)» → «Bon Scotch»).
-const TRIB=/tribute|hyllest|candlelight/i;
-function ownName(a){ let s=String(a||"").split(/\s+[–-]\s+|\s*\(|:\s/)[0]; const m=s.search(/\b(a\s+)?(tribute|hyllest|candlelight)\b/i); if(m>=0) s=s.slice(0,m); return nA(s); }
+const TRIB=/tribute|hyllest|candlelight|music of|best of|\bsynger\b/i; // «The Music of ABBA» and the like count as tributes too
+function ownName(a){ let s=String(a||"").split(/\s+[–-]\s+|\s*\(|:\s/)[0]; const m=s.search(/\b(a\s+)?(tribute|hyllest|candlelight)\b|\b(the\s+)?(music|best) of\b|\bsynger\b/i); if(m>=0) s=s.slice(0,m); return nA(s); }
 function favArtistKey(name){ const n=nA(name); if(favA.has(n)) return n; const c=n.replace(/ /g,""); if(favAc.has(c)) return favAc.get(c);
   const t=TRIB.test(String(name||""))?ownName(name):n; if(!t) return null; if(t!==n){ if(favA.has(t)) return t; const tc=t.replace(/ /g,""); if(favAc.has(tc)) return favAc.get(tc); }
   const s=" "+t+" "; for(const k of favA.keys()){ if(k.length>=4 && s.includes(" "+k+" ")) return k; } return null; }
@@ -542,6 +543,8 @@ favChip.addEventListener("click",e=>{ e.stopPropagation(); if(!favPanel.hidden){
   favCounts(); favPanel.hidden=false; favChip.setAttribute("aria-expanded","true"); });
 favPanel.addEventListener("click",e=>{ e.stopPropagation(); if(e.target.closest(".fok")){ closeFav(); return; }
   const rmb=e.target.closest(".frm"); if(rmb){ favRemoveArtist(rmb.dataset.key); return; }
+  const trb=e.target.closest(".ftrib"); if(trb){ state.fS=state.fA=state.fV=state.fN=false; closeFav(); if(state.view!=="list"&&state.view!=="fests") state.view="list";
+    const q=$("q"); q.value=trb.dataset.q; q.dispatchEvent(new Event("input")); return; }
   const ex=e.target.closest(".fexp:not(.none)"); if(ex){ const t=ex.closest(".fopt").dataset.f; favOpen.has(t)?favOpen.delete(t):favOpen.add(t); favSubs(); return; }
   const it=e.target.closest(".fitem"); if(it){ const X=it.dataset.t==="fA"?favEx.a:favEx.v; X.has(it.dataset.key)?X.delete(it.dataset.key):X.add(it.dataset.key); if(!X.has(it.dataset.key)) state[it.dataset.t]=true; favExSave(); render(); return; }
   const al=e.target.closest(".fall"); if(al){ const X=al.dataset.t==="fA"?favEx.a:favEx.v, M=al.dataset.t==="fA"?favA:favV; if(X.size) X.clear(); else M.forEach((v,k)=>X.add(k)); favExSave(); render(); return; }
@@ -580,13 +583,19 @@ function favSubs(){ const keep={fS:state.fS,fA:state.fA,fV:state.fV,fN:state.fN}
       if(isA){ const tot=actHits(lab); if(!tot) fl.appendChild(el("span","fst","Ingen konserter nå")); else if(!n) fl.appendChild(el("span","fst",tot+" "+(tot===1?"konsert":"konserter")+" – skjult av filtrene")); }
       b.append(el("span","fbox"), fl, el("span","pn fct",String(n)));
       if(canAdd){ const row=el("div","frow"), rm=el("button","frm","✕"); rm.type="button"; rm.dataset.key=k; rm.setAttribute("aria-label","Fjern "+lab+" fra favorittartistene"); rm.title="Fjern fra favorittartistene"; row.append(b,rm); sub.appendChild(row); }
-      else sub.appendChild(b); }); }); }
+      else sub.appendChild(b);
+      if(isA){ const tr=tribHits(lab); if(tr){ const tb=el("button","ftrib","+ "+tr+" "+(tr===1?"tributekonsert":"tributekonserter")+" – vis"); tb.type="button"; tb.dataset.q=lab; tb.title="Tributekonserter teller ikke som favoritter og gir ikke varsel"; sub.appendChild(tb); } } }); }); }
 // number of upcoming concerts (festival days included) for an artist name, by the same rule as the hearts
 function actHits(name){ const k=nA(name), c=k.replace(/ /g,""); let n=0;
   allGigs.forEach(g=>{ if((g.end||g.date)<todayStr) return; const a=nA(g.artist);
     if(a===k||a.replace(/ /g,"")===c){ n++; return; }
     const t=TRIB.test(g.artist)?ownName(g.artist):a; if(!t) return;
     if(t===k||t.replace(/ /g,"")===c||(k.length>=4&&(" "+t+" ").includes(" "+k+" "))) n++; }); return n; }
+// upcoming tribute concerts that pay tribute to this artist (shown quietly in the list; no heart, NY mark or alert)
+function tribHits(name){ const k=nA(name); if(k.length<2) return 0; let n=0;
+  allGigs.forEach(g=>{ if((g.end||g.date)<todayStr||!TRIB.test(g.artist)) return; const a=nA(g.artist), t=ownName(g.artist);
+    if(a===k||t===k||(k.length>=4&&(" "+t+" ").includes(" "+k+" "))) return; // the tribute band itself: counted as a real concert
+    if((" "+a+" ").includes(" "+k+" ")) n++; }); return n; }
 const konsTxt=n=>n?n+" "+(n===1?"konsert":"konserter"):"ingen konserter nå";
 function favRemoveArtist(key){ const name=favA.get(key); if(!name) return; favEx.a.delete(key); favExSave(); favOp("a",name,false);
   favToast("«"+name+"» er fjernet fra favorittartistene.","Angre",()=>favOp("a",name,true)); }
@@ -1198,7 +1207,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="81df0fce882e"; let busy=false;
+<script>(function(){ const BUILD="ebdeb61e3540"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
