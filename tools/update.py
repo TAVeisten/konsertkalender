@@ -64,7 +64,16 @@ TRIBUTE_RE = re.compile(r"tribute|hyllest|candlelight", re.I)
 WEEKDAYS = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
 MONTHS = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"]
 CONSTS = ["DATA", "SOURCES", "VENUE_POS", "VENUE_URL", "CITY", "HOMES", "FESTS", "SUMMARY", "FAVS", "ADDED"]
-NEW_DAYS = 30  # how long a concert keeps its "added" date (for the NY marks and the Mine sider bubble)
+DAY0 = date(2026, 1, 1)  # day numbers in ADDED count from here
+
+
+def day_no(iso):
+    return (date.fromisoformat(iso) - DAY0).days
+
+
+def day_str(n):
+    from datetime import timedelta
+    return (DAY0 + timedelta(days=n)).isoformat()
 NYTT = os.path.join(ROOT, "nytt.json")
 
 
@@ -464,6 +473,12 @@ def check_scripts(path):
 
 def cmd_finish(failed, highlights):
     st, lines, idx, d = load()
+    old_c = (d.get("ADDED") or {}).get("c") or []
+    n_start = len(st["orig_keys"])
+    prev_day = {}
+    for i, r in enumerate(d["DATA"]):
+        if i < n_start and i < len(old_c) and old_c[i]:
+            prev_day[key(r)] = old_c[i]
     t = st["today"]
     n0 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if r[0] >= t]
@@ -586,29 +601,35 @@ def cmd_finish(failed, highlights):
         head = "%s fra favorittene · %s" % (pl(len(fav_items), "nyhet", "nyheter"), head)
     d["SUMMARY"] = {"head": head, "sections": secs}
 
-    # ADDED: the day each concert / festival artist came in (page id -> date), kept NEW_DAYS days. The page and
-    # Mine sider use it to mark what is new from the favourites since the user last looked on that device.
-    from datetime import timedelta
-    oldest = (date.fromisoformat(t) - timedelta(days=NEW_DAYS)).isoformat()
+    # ADDED: the day each concert / festival artist came in, as a day number (days since 2026-01-01, 0 = from before
+    # this was tracked). "c" runs parallel to DATA (same order), "f" is {"Festival|Artist": day}. No time limit: a
+    # mark stays until the concert has passed. The page and Mine sider use it to show what is new from the
+    # favourites since the user last looked on that device.
+    tn = day_no(t)
     new_keys = {a["k"] for a in added}
+    c = []
+    for r in d["DATA"]:
+        c.append(tn if key(r) in new_keys else prev_day.get(key(r), 0))
+    live_fa = {}
+    for f in d["FESTS"]:
+        for a_ in f.get("lineup", []):
+            n = a_["n"] if isinstance(a_, dict) else a_
+            live_fa[f["name"] + "|" + n] = (f, n)
+    fd = {k: v for k, v in ((d.get("ADDED") or {}).get("f") or {}).items() if k in live_fa}
+    for fname, artist, *_ in st.get("fest_added", []):
+        if fname + "|" + artist in live_fa:
+            fd[fname + "|" + artist] = tn
+    d["ADDED"] = {"day": t, "c": c, "f": fd}
     ids = {}
     live_ids = {}
-    for r in d["DATA"]:
-        cid = r[0] + "|" + r[1] + "|" + r[2]
-        live_ids[cid] = ("c", r)
-        if key(r) in new_keys:
-            ids[cid] = t
-    for f in d["FESTS"]:
-        for a in f.get("lineup", []):
-            n = a["n"] if isinstance(a, dict) else a
-            live_ids["fa|" + f["name"] + "|" + n] = ("f", f, n)
-    for fname, artist, *_ in st.get("fest_added", []):
-        if "fa|" + fname + "|" + artist in live_ids:
-            ids["fa|" + fname + "|" + artist] = t
-    for k, v in (d.get("ADDED") or {}).get("ids", {}).items():
-        if k in live_ids and v >= oldest and k not in ids:
-            ids[k] = v
-    d["ADDED"] = {"day": t, "ids": ids}
+    for r, v in zip(d["DATA"], c):
+        if v:
+            k = r[0] + "|" + r[1] + "|" + r[2]
+            ids[k] = day_str(v)
+            live_ids[k] = ("c", r)
+    for k, v in fd.items():
+        ids["fa|" + k] = day_str(v)
+        live_ids["fa|" + k] = ("f",) + live_fa[k]
     fav_new = []
     for k, v in ids.items():
         x = live_ids[k]
