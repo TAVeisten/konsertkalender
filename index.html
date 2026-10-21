@@ -261,8 +261,8 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 .favsync .favok{color:var(--ink);font-weight:600}
 .fsw.blu[aria-pressed="true"]{border-color:var(--blue)}
 .fsw.blu[aria-pressed="true"] .sw{background:var(--blue)}
-.favsync .pushrow{display:grid;gap:4px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
-.favsync .pushrow p{margin:0;font-size:13px;color:var(--muted)}
+.pushrow{display:grid;gap:8px;margin-top:4px}
+.pushrow p{margin:0}
 @media (max-width:520px){
   .gig{grid-template-columns:52px minmax(0,1fr);gap:10px}
   .actions{grid-column:2;justify-content:flex-start;gap:4px}
@@ -567,7 +567,7 @@ function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
   else { ok=true; const d=favSynced?new Date(favSynced):null; t="✓ Like på alle enheter."+(d?" Sist lagret "+d.toLocaleDateString("nb-NO",{day:"numeric",month:"short"})+" kl. "+pad(d.getHours())+"."+pad(d.getMinutes())+".":""); }
   info.replaceChildren(el("span",ok?"favok":null,t), document.createElement("br"), document.createTextNode(cnt));
   row.hidden=help.hidden=!needKey; rm.hidden=!(FAV_WEB&&favToken);
-  { const pr=$("favSync")&&$("favSync").querySelector(".pushrow"); if(pr){ pr.hidden=!(FAV_WEB&&favToken); const pb=pr.querySelector(".fsw"); pb.setAttribute("aria-pressed",String(favPush)); pb.querySelector(".st").textContent=favPush?"PÅ":"AV"; } }
+  { const pr=$("pushRow"); if(pr){ pr.hidden=!(FAV_WEB&&favToken); const pb=pr.querySelector(".fsw"); pb.setAttribute("aria-pressed",String(favPush)); pb.querySelector(".st").textContent=favPush?"PÅ":"AV"; } }
   $("gear").classList.toggle("dot",!state.showFest||favWarn()); }
 (function(){ const gp=$("gearPanel"), box=el("div","favsync"); box.id="favSync";
   box.append(el("h2",null,"Stjerner og favoritter"), el("p","fi",""));
@@ -576,10 +576,10 @@ function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
   const err=el("p","pperr",""); err.setAttribute("role","status");
   const help=el("p","pphelp"); help.innerHTML='Lag nøkkelen på <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com</a>: velg bare repoet <b>konsertkalender</b> og tilgangen <b>Contents: Read and write</b>. Bruk samme nøkkel på mobil og Mac.';
   const rm=el("button","linkbtn","Fjern nøkkelen fra denne enheten"); rm.type="button"; rm.style.justifySelf="start";
-  const pr=el("div","pushrow"), pb=document.createElement("button"); pb.type="button"; pb.className="chip fsw blu"; pb.innerHTML='<span class="sw" aria-hidden="true"></span>Push-varsel ved nytt fra favorittene <span class="st"></span>';
+  const pr=el("div","pushrow"); pr.id="pushRow"; const pb=document.createElement("button"); pb.type="button"; pb.className="chip fsw blu"; pb.innerHTML='<span class="sw" aria-hidden="true"></span>Push-varsel ved nytt fra favorittene <span class="st"></span>';
   pr.append(pb, el("p",null,"Varselet kommer fra morgenoppdateringen i Claude-appen. Bryteren gjelder alle enhetene dine. Boblen i Mine sider og NY-merkene vises uansett."));
   pb.addEventListener("click",()=>{ favPending=favPending.filter(o=>o.t!=="p").concat([{t:"p",on:!favPush}]); store("kk-pending",favPending); favApply(); favUi(); favSync(); });
-  box.append(row,err,help,rm,pr); gp.appendChild(box);
+  box.append(row,err,help,rm); gp.appendChild(box); gp.insertBefore(pr,box); // switches first, alphabetical: Festivalartister, Push-varsel
   go.addEventListener("click",async()=>{ const tk=inp.value.trim(); if(!tk) return;
     if(!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(tk)){ err.textContent="Det ser ikke ut som en GitHub-nøkkel. Den begynner med github_pat_."; return; }
     go.disabled=true; err.textContent="Sjekker nøkkelen …";
@@ -1108,7 +1108,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="83b24302c65e"; let busy=false;
+<script>(function(){ const BUILD="5c9ad1015761"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
