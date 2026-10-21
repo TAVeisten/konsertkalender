@@ -552,16 +552,16 @@ def cmd_finish(failed, highlights):
             items.append(pl(removed, "passert konsert er fjernet", "passerte konserter er fjernet"))
         secs.append({"t": "Nye konserter", "items": items})
     if prio:
-        secs.append({"t": "Prioriterte scener", "items": cap(["%s (%s, %s)" % (a["artist"], a["venue"], short_date(a["date"])) for a in prio])})
+        secs.append({"t": "Prioriterte scener", "items": ["%s (%s, %s)" % (a["artist"], a["venue"], short_date(a["date"])) for a in prio]})
     if trib:
-        secs.append({"t": "Tributekonserter", "items": cap(["%s (%s, %s)" % (a["artist"], a["venue"], a["city"]) for a in trib])})
+        secs.append({"t": "Tributekonserter", "items": ["%s (%s, %s)" % (a["artist"], a["venue"], a["city"]) for a in trib]})
     if fest_lines:
-        secs.append({"t": "Festivaler", "items": cap(fest_lines)})
+        secs.append({"t": "Festivaler", "items": fest_lines})
     if pos_lines:
         secs.append({"t": "Spillesteder", "items": pos_lines})
     fl = [x.strip() for x in (failed or "").split(";") if x.strip()]
     if fl:
-        secs.append({"t": "Kunne ikke sjekkes", "items": cap(fl)})
+        secs.append({"t": "Kunne ikke sjekkes", "items": fl})
     for s in secs:
         s["items"] = [i.replace("</", "< /") for i in s["items"]]
 
