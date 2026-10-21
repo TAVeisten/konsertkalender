@@ -413,8 +413,13 @@ function favApply(){ const d=opsOn(favBase||{stars:load("kk-favs",[])}, favPendi
   store("kk-favs",d.stars); }
 favApply();
 // artist match: same name, or the favourite's name as whole words inside a longer act name ("Bigbang – akustisk")
-function favArtistKey(name){ const n=nA(name); if(favA.has(n)) return n; const c=n.replace(/ /g,""); if(favAc.has(c)) return favAc.get(c); const s=" "+n+" ";
-  for(const k of favA.keys()){ if(k.length>=4 && s.includes(" "+k+" ")) return k; } return null; }
+// Tribute concerts count only for the tribute band itself, never for the artist they pay tribute to: for a tribute
+// act the longer-name match looks only at the band's own name («Bon Scotch (tribute til AC/DC …)» → «Bon Scotch»).
+const TRIB=/tribute|hyllest|candlelight/i;
+function ownName(a){ let s=String(a||"").split(/\s+[–-]\s+|\s*\(|:\s/)[0]; const m=s.search(/\b(a\s+)?(tribute|hyllest|candlelight)\b/i); if(m>=0) s=s.slice(0,m); return nA(s); }
+function favArtistKey(name){ const n=nA(name); if(favA.has(n)) return n; const c=n.replace(/ /g,""); if(favAc.has(c)) return favAc.get(c);
+  const t=TRIB.test(String(name||""))?ownName(name):n; if(!t) return null; if(t!==n){ if(favA.has(t)) return t; const tc=t.replace(/ /g,""); if(favAc.has(tc)) return favAc.get(tc); }
+  const s=" "+t+" "; for(const k of favA.keys()){ if(k.length>=4 && s.includes(" "+k+" ")) return k; } return null; }
 const isFavA=name=>!!favArtistKey(name);
 const isFavV=x=>favV.has(nV(x.venue+"|"+x.city));
 // «NY»: concerts from the favourites added since you last opened the calendar on this device. ADDED.day is the
@@ -576,7 +581,9 @@ function favSubs(){ const keep={fS:state.fS,fA:state.fA,fV:state.fV,fN:state.fN}
 // number of upcoming concerts (festival days included) for an artist name, by the same rule as the hearts
 function actHits(name){ const k=nA(name), c=k.replace(/ /g,""); let n=0;
   allGigs.forEach(g=>{ if((g.end||g.date)<todayStr) return; const a=nA(g.artist);
-    if(a===k||a.replace(/ /g,"")===c||(k.length>=4&&(" "+a+" ").includes(" "+k+" "))) n++; }); return n; }
+    if(a===k||a.replace(/ /g,"")===c){ n++; return; }
+    const t=TRIB.test(g.artist)?ownName(g.artist):a; if(!t) return;
+    if(t===k||t.replace(/ /g,"")===c||(k.length>=4&&(" "+t+" ").includes(" "+k+" "))) n++; }); return n; }
 const konsTxt=n=>n?n+" "+(n===1?"konsert":"konserter"):"ingen konserter nå";
 function favRemoveArtist(key){ const name=favA.get(key); if(!name) return; favEx.a.delete(key); favExSave(); favOp("a",name,false);
   favToast("«"+name+"» er fjernet fra favorittartistene.","Angre",()=>favOp("a",name,true)); }

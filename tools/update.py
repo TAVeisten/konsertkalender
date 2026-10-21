@@ -460,9 +460,22 @@ def load_favs():
 def fav_artist(name, arts):
     """Same rule as the page: same name, or the favourite's name as whole words inside a longer act name."""
     n = fav_words(name)
-    s = " " + n + " "
     c = n.replace(" ", "")  # "a-ha" = "aha": the whole name written with or without spaces/dashes
-    return any(k == n or k.replace(" ", "") == c or (len(k) >= 4 and " " + k + " " in s) for k in arts)
+    if any(k == n or k.replace(" ", "") == c for k in arts):
+        return True
+    # a tribute concert counts only for the tribute band itself, never for the artist it pays tribute to
+    t = own_name(name) if TRIBUTE_RE.search(str(name)) else n
+    if not t:
+        return False
+    s, tc = " " + t + " ", t.replace(" ", "")
+    return any(k == t or k.replace(" ", "") == tc or (len(k) >= 4 and " " + k + " " in s) for k in arts)
+
+
+def own_name(name):
+    """A tribute act's own name: before any bracket, dash or colon, and before "(a) tribute"/"hyllest"."""
+    s = re.split(r"\s+[–-]\s+|\s*\(|:\s", str(name))[0]
+    m = re.search(r"\b(a\s+)?(tribute|hyllest|candlelight)\b", s, re.I)
+    return fav_words(s[:m.start()] if m else s)
 
 
 def check_scripts(path):
