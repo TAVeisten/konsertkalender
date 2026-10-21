@@ -50,6 +50,11 @@ h1 span{color:var(--accent)}
 .news .nx summary::after{content:"";margin-left:auto;margin-right:4px;width:7px;height:7px;border-right:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(45deg) translateY(-2px);transition:transform .15s}
 .news .nx details[open] summary::after{transform:rotate(-135deg) translate(-1px,-1px)}
 .news .nx details ul{padding-bottom:12px}
+.news .nxall{display:flex;justify-content:flex-end;border-bottom:1px solid var(--line)}
+.news .nxall button{font:inherit;font-size:13px;font-weight:700;color:var(--blue);background:none;border:0;padding:0 4px;min-height:40px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.news .nxall button::after{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.news .nxall button.on::after{transform:rotate(-135deg) translate(-1px,-1px)}
+.news .nxall button:hover{text-decoration:underline;text-underline-offset:3px}
 .news .ns{margin-top:10px;display:grid;gap:12px}
 .news .ns b{display:block;font-weight:700;margin-bottom:3px}
 .news .ns ul{margin:0;padding-left:18px;display:grid;gap:3px}
@@ -1020,7 +1025,14 @@ const SUMMARY = {"head": "12 nyheter fra favorittene · 104 nye konserter · 23 
         secs.forEach(s=>{ const ul=document.createElement("ul"); s.items.forEach(i=>{ const li=document.createElement("li"); li.textContent=String(i); ul.appendChild(li); });
           if(top.includes(s.t)){ const d=document.createElement("div"), b=document.createElement("b"); b.textContent=s.t; d.append(b,ul); g1.appendChild(d); }
           else { const d=document.createElement("details"), sm=document.createElement("summary"), c=document.createElement("span"); c.className="cn"; c.textContent="("+s.items.length+")"; sm.append(s.t+" ",c); d.append(sm,ul); g2.appendChild(d); } });
-        if(g1.children.length) t.appendChild(g1); if(g2.children.length) t.appendChild(g2); n.classList.add("st"); n.removeAttribute("role"); n.removeAttribute("tabindex"); n.removeAttribute("aria-expanded"); n.removeAttribute("title"); } } }catch(e){}
+        if(g1.children.length) t.appendChild(g1);
+        if(g2.children.length){ // one shared button that opens or closes all the dropdowns at once
+          const ds=[...g2.querySelectorAll("details")], w=document.createElement("div"), ab=document.createElement("button"); w.className="nxall"; ab.type="button";
+          const sync=()=>{ const all=ds.every(d=>d.open); ab.textContent=all?"Lukk alle":"Åpne alle"; ab.classList.toggle("on",all); ab.setAttribute("aria-expanded",String(all)); };
+          ab.addEventListener("click",()=>{ const o=!ds.every(d=>d.open); ds.forEach(d=>{ d.open=o; }); sync(); });
+          ds.forEach(d=>d.addEventListener("toggle",sync)); sync();
+          if(ds.length>1){ w.appendChild(ab); g2.insertBefore(w,g2.firstChild); }
+          t.appendChild(g2); } n.classList.add("st"); n.removeAttribute("role"); n.removeAttribute("tabindex"); n.removeAttribute("aria-expanded"); n.removeAttribute("title"); } } }catch(e){}
   if(n.classList.contains("st")) return; // each lower section opens on its own; no «Vis alt» for the whole box
   if(!t.textContent.trim()){ n.hidden=true; return; }
   const more=document.createElement("span"); more.className="nm"; more.textContent="Vis alt"; more.hidden=true; n.appendChild(more);
@@ -1052,7 +1064,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="889e08ab156e"; let busy=false;
+<script>(function(){ const BUILD="20b3117060b7"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
