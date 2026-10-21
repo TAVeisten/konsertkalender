@@ -63,7 +63,9 @@ PREF = {"Eventworld": 1, "Songkick": 2, "TicketCo": 3}
 TRIBUTE_RE = re.compile(r"tribute|hyllest|candlelight", re.I)
 WEEKDAYS = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
 MONTHS = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"]
-CONSTS = ["DATA", "SOURCES", "VENUE_POS", "VENUE_URL", "CITY", "HOMES", "FESTS", "SUMMARY", "FAVS"]
+CONSTS = ["DATA", "SOURCES", "VENUE_POS", "VENUE_URL", "CITY", "HOMES", "FESTS", "SUMMARY", "FAVS", "ADDED"]
+NEW_DAYS = 30  # how long a concert keeps its "added" date (for the NY marks and the Mine sider bubble)
+NYTT = os.path.join(ROOT, "nytt.json")
 
 
 def die(msg):
@@ -583,6 +585,45 @@ def cmd_finish(failed, highlights):
     if fav_items:
         head = "%s fra favorittene · %s" % (pl(len(fav_items), "nyhet", "nyheter"), head)
     d["SUMMARY"] = {"head": head, "sections": secs}
+
+    # ADDED: the day each concert / festival artist came in (page id -> date), kept NEW_DAYS days. The page and
+    # Mine sider use it to mark what is new from the favourites since the user last looked on that device.
+    from datetime import timedelta
+    oldest = (date.fromisoformat(t) - timedelta(days=NEW_DAYS)).isoformat()
+    new_keys = {a["k"] for a in added}
+    ids = {}
+    live_ids = {}
+    for r in d["DATA"]:
+        cid = r[0] + "|" + r[1] + "|" + r[2]
+        live_ids[cid] = ("c", r)
+        if key(r) in new_keys:
+            ids[cid] = t
+    for f in d["FESTS"]:
+        for a in f.get("lineup", []):
+            n = a["n"] if isinstance(a, dict) else a
+            live_ids["fa|" + f["name"] + "|" + n] = ("f", f, n)
+    for fname, artist, *_ in st.get("fest_added", []):
+        if "fa|" + fname + "|" + artist in live_ids:
+            ids["fa|" + fname + "|" + artist] = t
+    for k, v in (d.get("ADDED") or {}).get("ids", {}).items():
+        if k in live_ids and v >= oldest and k not in ids:
+            ids[k] = v
+    d["ADDED"] = {"day": t, "ids": ids}
+    fav_new = []
+    for k, v in ids.items():
+        x = live_ids[k]
+        if x[0] == "c":
+            r = x[1]
+            if fav_artist(r[1], arts):
+                fav_new.append({"d": v, "t": "♥ %s (%s, %s)" % (r[1], r[2], short_date(r[0]))})
+            elif (r[2] + "|" + r[3]).lower() in vens:
+                fav_new.append({"d": v, "t": "📍 %s: %s (%s)" % (r[2], r[1], short_date(r[0]))})
+        else:
+            f, n = x[1], x[2]
+            if fav_artist(n, arts) or (f["venue"] + "|" + f["city"]).lower() in vens:
+                fav_new.append({"d": v, "t": "%s %s på %s" % ("♥" if fav_artist(n, arts) else "📍", n, f["name"])})
+    fav_new.sort(key=lambda x: (x["d"], x["t"]), reverse=True)
+    json.dump({"day": t, "fav": fav_new}, open(NYTT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     d["FAVS"] = fav_file()  # the Claude app shows the favourites as they are this morning
 
     n = now()
@@ -604,6 +645,17 @@ def cmd_finish(failed, highlights):
     print("MELDING:")
     print("\n".join(["- " + s_["t"] + ": " + " | ".join(s_["items"]) for s_ in secs]) or "- Ingen endringer")
     print("Totalt: %d konserter, %d festivaler" % (len(d["DATA"]), len(d["FESTS"])))
+    if fav_items:
+        names = []
+        for i in fav_items:
+            nm = re.sub(r"^\S+\s+", "", i)
+            nm = nm.split(":", 1)[1].strip() if nm.startswith(tuple(v.split("|")[0] for v in fav_file()["venues"])) and ":" in nm else nm
+            names.append(re.sub(r"\s*\(.*$", "", nm))
+        uniq = list(dict.fromkeys(names))
+        txt = ", ".join(uniq[:4]) + (" og %d til" % (len(uniq) - 4) if len(uniq) > 4 else "")
+        print("VARSEL: Konsertkalender: %s fra favorittene – %s" % (pl(len(fav_items), "nyhet", "nyheter"), txt))
+    else:
+        print("VARSEL: (ingen)")
 
 
 def main(a):
