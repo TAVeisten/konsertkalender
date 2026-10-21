@@ -461,7 +461,8 @@ def fav_artist(name, arts):
     """Same rule as the page: same name, or the favourite's name as whole words inside a longer act name."""
     n = fav_words(name)
     s = " " + n + " "
-    return any(k == n or (len(k) >= 4 and " " + k + " " in s) for k in arts)
+    c = n.replace(" ", "")  # "a-ha" = "aha": the whole name written with or without spaces/dashes
+    return any(k == n or k.replace(" ", "") == c or (len(k) >= 4 and " " + k + " " in s) for k in arts)
 
 
 def check_scripts(path):
