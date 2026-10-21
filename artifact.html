@@ -389,7 +389,10 @@ let favs = new Set(load("kk-favs",[]));
 // ("pending") and written with the GitHub key stored on this device; without a key they stay on this device.
 const FAV_API="https://api.github.com/repos/TAVeisten/konsertkalender/contents/favoritter.json";
 const FAV_WEB=/github\.io$/.test(location.hostname);
-const nA=x=>String(x||"").normalize("NFKC").toLowerCase().replace(/^the\s+/,"").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+// a name made only of signs (the band «!!!») keeps its signs, so it is not lost
+const nA=x=>{ const r=String(x||"").normalize("NFKC").toLowerCase().trim(); return r.replace(/^the\s+/,"").replace(/[^\p{L}\p{N}]+/gu," ").trim()||r.replace(/\s+/g," "); };
+// such a sign-only favourite matches an act whose name starts with it («!!! (Chk Chk Chk)»)
+const symHit=(name,k)=>{ if(/[\p{L}\p{N}]/u.test(k)) return false; const r=String(name||"").normalize("NFKC").toLowerCase().trim(); return r===k||(r.startsWith(k)&&/^[\s(–-]/.test(r.slice(k.length))); };
 const nV=x=>String(x||"").normalize("NFKC").toLowerCase().trim();
 const favA=new Map(), favV=new Map(), favAc=new Map();
 const cmpA=x=>nA(x).replace(/ /g,"");
@@ -423,7 +426,7 @@ const tribTo=(a,t,k)=>{ const s=" "+(t&&a.startsWith(t)?a.slice(t.length):a)+" "
 const ownHit=(t,k)=>k===t||k.replace(/ /g,"")===t.replace(/ /g,"")||(k.length>=4&&(" "+t+" ").includes(" "+k+" "));
 function favArtistKey(name){ const n=nA(name); if(favA.has(n)) return n; const c=n.replace(/ /g,""); if(favAc.has(c)) return favAc.get(c);
   const tr=TRIB.test(String(name||"")), t=tr?ownName(name):n; if(!t) return null;
-  for(const k of favA.keys()){ if(ownHit(t,k)&&!(tr&&tribTo(n,t,k))) return k; } return null; }
+  for(const k of favA.keys()){ if((ownHit(t,k)||symHit(name,k))&&!(tr&&tribTo(n,t,k))) return k; } return null; }
 const isFavA=name=>!!favArtistKey(name);
 const isFavV=x=>favV.has(nV(x.venue+"|"+x.city));
 // «NY»: concerts from the favourites added since you last opened the calendar on this device. ADDED.day is the
@@ -588,7 +591,7 @@ function favSubs(){ const keep={fS:state.fS,fA:state.fA,fV:state.fV,fN:state.fN}
 // number of upcoming concerts (festival days included) for an artist name, by the same rule as the hearts
 function actHits(name){ const k=nA(name), c=k.replace(/ /g,""); let n=0;
   allGigs.forEach(g=>{ if((g.end||g.date)<todayStr) return; const a=nA(g.artist);
-    if(a===k||a.replace(/ /g,"")===c){ n++; return; }
+    if(a===k||a.replace(/ /g,"")===c||symHit(g.artist,k)){ n++; return; }
     const tr=TRIB.test(g.artist), t=tr?ownName(g.artist):a; if(!t) return;
     if(ownHit(t,k)&&!(tr&&tribTo(a,t,k))) n++; }); return n; }
 // upcoming tribute concerts that pay tribute to this artist (shown quietly in the list; no heart, NY mark or alert)

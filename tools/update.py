@@ -427,8 +427,9 @@ FAVS = os.path.join(ROOT, "favoritter.json")
 def fav_words(s):
     """Same normalising as the page: lower case, leading "The" dropped, everything but letters/digits -> one space."""
     s = unicodedata.normalize("NFKC", str(s)).lower().strip()
+    r = re.sub(r"\s+", " ", s)
     s = re.sub(r"^the\s+", "", s)
-    return " ".join(re.findall(r"[^\W_]+", s))
+    return " ".join(re.findall(r"[^\W_]+", s)) or r  # a name of signs only (the band "!!!") keeps its signs
 
 
 def fav_file():
@@ -462,6 +463,10 @@ def fav_artist(name, arts):
     n = fav_words(name)
     c = n.replace(" ", "")  # "a-ha" = "aha": the whole name written with or without spaces/dashes
     if any(k == n or k.replace(" ", "") == c for k in arts):
+        return True
+    raw = unicodedata.normalize("NFKC", str(name)).lower().strip()
+    if any(not re.search(r"[^\W_]", k) and (raw == k or (raw.startswith(k) and re.match(r"[\s(–-]", raw[len(k):])))
+           for k in arts):  # sign-only favourite like "!!!" matches "!!! (Chk Chk Chk)"
         return True
     # a tribute concert counts only for the tribute band itself, never for the artist it pays tribute to
     tr = bool(FAV_TRIB_RE.search(str(name)))
