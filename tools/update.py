@@ -537,7 +537,7 @@ def cmd_finish(failed, highlights):
 
     secs = []
     if fav_items:
-        secs.append({"t": "Nytt fra favorittene", "items": cap(fav_items)})
+        secs.append({"t": "Nytt fra favorittene", "items": fav_items})  # always the full list
     if added or removed:
         items = []
         if added:
