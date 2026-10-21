@@ -372,10 +372,9 @@ const nV=x=>String(x||"").normalize("NFKC").toLowerCase().trim();
 const favA=new Map(), favV=new Map();
 let favToken=load("kk-ghtoken",""), favBase=favToken?load("kk-favbase",null):null, favPending=load("kk-pending",[]), favErr="", favSynced=load("kk-synced",""), favPulled=0;
 // Claude app: shows the shared favourites as they were at the morning update (FAVS, written by the daily run).
-// Hearts and pins are marked on the website; stars set here are kept on top, only in the Claude app.
+// Stars, hearts and pins are all marked on the website only; the Claude app just shows them (read-only).
 const FAV_APP=!FAV_WEB&&typeof FAVS==="object"&&FAVS?FAVS:null;
-if(FAV_APP){ favPending=favPending.filter(o=>o.t==="s");
-  if(!load("kk-appmig",false)){ favPending=favPending.concat(load("kk-favs",[]).map(k=>({t:"s",k,on:true}))); store("kk-appmig",true); }
+if(FAV_APP){ favPending=[];
   store("kk-pending",favPending); favBase={stars:FAV_APP.stars||[],artists:FAV_APP.artists||[],venues:FAV_APP.venues||[],seen:+FAV_APP.seen||0,...(FAV_APP.push===false?{push:false}:{})}; }
 function favToast(t){ let n=document.getElementById("favToast"); if(!n){ n=el("div","toast"); n.id="favToast"; n.setAttribute("role","status"); document.body.appendChild(n); }
   n.textContent=t; n.hidden=false; clearTimeout(favToast.t); favToast.t=setTimeout(()=>{ n.hidden=true; },4500); }
@@ -419,7 +418,7 @@ function favOp(t,k,on,silent){ favPending=favPending.filter(o=>!(o.t===t&&(t==="
   store("kk-pending",favPending); favApply(); if(t==="s"&&typeof savePrefs==="function") savePrefs();
   if(!silent){ render(); if(typeof favUi==="function") favUi(); }
   if(FAV_WEB&&favToken){ clearTimeout(favOp.t); favOp.t=setTimeout(favSync,700); } }
-function favClick(b){ if(!FAV_WEB&&(b.dataset.fa!=null||b.dataset.fv!=null)){ favToast("Favorittartister og -steder merker du i Mine sider eller Safari. De vises her etter neste morgenoppdatering."); return; }
+function favClick(b){ if(!FAV_WEB){ favToast("Stjerner og favoritter merker du i Mine sider eller Safari. De vises her etter neste morgenoppdatering."); return; }
   if(b.dataset.fa!=null){ const key=favArtistKey(b.dataset.fa); if(key) favOp("a",favA.get(key),false); else favOp("a",b.dataset.fa,true); }
   else if(b.dataset.fv!=null){ const v=b.dataset.fv, on=favV.has(nV(v)); favOp("v",on?favV.get(nV(v)):v,!on); }
   else if(b.dataset.id!=null){ favOp("s",b.dataset.id,!favs.has(b.dataset.id)); } }
@@ -560,7 +559,7 @@ function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
   const info=box.querySelector(".fi"), row=box.querySelector(".pprow"), help=box.querySelector(".pphelp"), rm=box.querySelector(".linkbtn"), err=box.querySelector(".pperr");
   const n=pl=>pl; const cnt="★ "+favs.size+" "+(favs.size===1?"konsert":"konserter")+" · ♥ "+favA.size+" "+(favA.size===1?"artist":"artister")+" · 📍 "+favV.size+" "+(favV.size===1?"spillested":"spillesteder");
   let t, ok=false, needKey=false;
-  if(!FAV_WEB) t="Her vises stjernene og favorittene fra Mine sider og Safari slik de var ved morgenoppdateringen. Nye favoritter merker du der. Stjerner du setter her, lagres bare i Claude-appen.";
+  if(!FAV_WEB) t="Her vises stjernene og favorittene fra Mine sider og Safari slik de var ved morgenoppdateringen. Endringer gjør du der.";
   else if(!favToken){ t="Lagres bare på denne enheten. Har du GitHub-nøkkelen til kalenderen, kan du lime den inn her, så blir de like på alle enhetene dine."; needKey=true; }
   else if(favErr==="badkey"){ t="GitHub-nøkkelen virker ikke (feil eller utløpt). Lag en ny og lim den inn her. Endringene dine er lagret her så lenge."; needKey=true; }
   else if(favErr==="net"&&favPending.length) t="Fikk ikke kontakt med GitHub. Endringene er lagret her og sendes når det virker igjen.";
@@ -1021,8 +1020,7 @@ function savePrefs(){ if(!prefRef) return; clearTimeout(savePrefs.t);
   else if(meLoc && (!d || !Array.isArray(d.loc) || d.loc[0]!==meLoc[0] || d.loc[1]!==meLoc[1])) changed=true;
   if(d && d.home && (HOMES[d.home]||(d.home==="__me"&&meLoc)) && !state.home){ state.home=d.home; $("home").value=d.home; store("kk-home",d.home); }
   else if(state.home && (!d || d.home!==state.home)) changed=true;
-  if(d && Array.isArray(d.favs)){ d.favs.forEach(f=>{ if(!favs.has(f)) favOp("s",f,true,true); }); if(favs.size!==d.favs.length) changed=true; }
-  else if(favs.size) changed=true;
+  // stars are not restored here: in the Claude app they come only from the morning update (set on the website)
   if(d && +d.seen){ prefSeen=+d.seen; reSnap(); } if(+load("kk-seenNo",0)>(d&&+d.seen||0)) changed=true;
   if(changed) savePrefs();
   render();
