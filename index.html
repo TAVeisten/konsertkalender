@@ -522,7 +522,7 @@ document.addEventListener("pointerdown",e=>{ if(!favPanel.hidden && !favPanel.co
 document.addEventListener("click",()=>{ if(!favPanel.hidden) closeFav(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeFav(); });
 whenEl.addEventListener("scroll",closeFav,{passive:true});
-const festChip=document.createElement("button"); festChip.type="button"; festChip.className="chip fsw"; festChip.innerHTML='<span class="sw" aria-hidden="true"></span>Festivalartister <span class="st"></span>'; festChip.dataset.k="__fest"; festChip.title="Vis eller skjul artister som spiller på festivaler"; { const gp=$("gearPanel"); gp.insertBefore(festChip,gp.querySelector("p")); }
+const festChip=document.createElement("button"); festChip.type="button"; festChip.className="chip fsw blu"; festChip.innerHTML='<span class="sw" aria-hidden="true"></span>Festivalartister <span class="st"></span>'; festChip.dataset.k="__fest"; festChip.title="Vis eller skjul artister som spiller på festivaler"; { const gp=$("gearPanel"); gp.insertBefore(festChip,gp.querySelector("p")); }
 festChip.addEventListener("click",e=>{ e.stopPropagation(); state.showFest=!state.showFest; store("kk-showfest",state.showFest); render(); });
 { const gear=$("gear"), gp=$("gearPanel"), closeG=()=>{ gp.hidden=true; gear.setAttribute("aria-expanded","false"); };
   gear.addEventListener("click",e=>{ e.stopPropagation(); gp.hidden=!gp.hidden; gear.setAttribute("aria-expanded",String(!gp.hidden)); });
@@ -1108,7 +1108,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="5c9ad1015761"; let busy=false;
+<script>(function(){ const BUILD="ca72f85bf4d4"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
