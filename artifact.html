@@ -453,6 +453,8 @@ async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=
   if(favAgain){ favAgain=false; favSync(); } }
 const state = { showFest: load("kk-showfest",true), view:"list", q:"", when:"all", from:"", to:"", place:"", genre:"", dist:"",
   venue:"", artist:"", onlyFav:false, fN:false, fS:false, fA:false, fV:false, home: load("kk-home",""), calMonth:null, calDay:"" };
+// opened from the «N nye fra favorittene» bubble in Mine sider (…/konsertkalender/?nye): start with that filter on
+try{ if(/[?&]nye(=|&|$)/.test(location.search)){ state.fN=true; history.replaceState(null,"",location.pathname+location.hash); } }catch(e){}
 
 // distance
 function km(a,b){ const R=6371,r=x=>x*Math.PI/180; const dLa=r(b[0]-a[0]), dLo=r(b[1]-a[1]);
