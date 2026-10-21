@@ -464,21 +464,32 @@ def fav_artist(name, arts):
     if any(k == n or k.replace(" ", "") == c for k in arts):
         return True
     # a tribute concert counts only for the tribute band itself, never for the artist it pays tribute to
-    t = own_name(name) if FAV_TRIB_RE.search(str(name)) else n
+    tr = bool(FAV_TRIB_RE.search(str(name)))
+    t = own_name(name) if tr else n
     if not t:
         return False
     s, tc = " " + t + " ", t.replace(" ", "")
-    return any(k == t or k.replace(" ", "") == tc or (len(k) >= 4 and " " + k + " " in s) for k in arts)
+    return any((k == t or k.replace(" ", "") == tc or (len(k) >= 4 and " " + k + " " in s)) and not (tr and trib_to(n, t, k))
+               for k in arts)
+
+
+def trib_to(n, t, k):
+    """True when a tribute act names the artist it honours ("abba hyllest", "spiller ac dc", "tribute til …"),
+    looking only after the band's own name t (so "Bon Scotch (tribute til …)" is still Bon Scotch)."""
+    s = " " + (n[len(t):] if t and n.startswith(t) else n) + " "
+    return any(" " + x + " " in s for x in (k + " hyllest", k + " tribute", "tribute to " + k, "tribute til " + k,
+                                             "hyllest til " + k, "music of " + k, "best of " + k, "spiller " + k,
+                                             "synger " + k, "plays " + k))
 
 
 # for favourites, "The Music of ABBA", "The Best of …" and "X synger Y" count as tributes too (same rule as the page)
-FAV_TRIB_RE = re.compile(r"tribute|hyllest|candlelight|music of|best of|\bsynger\b", re.I)
+FAV_TRIB_RE = re.compile(r"tribute|hyllest|candlelight|music of|best of|\bsynger\b|\bspiller\b|\bplays\b", re.I)
 
 
 def own_name(name):
     """A tribute act's own name: before any bracket, dash or colon, and before "(a) tribute"/"hyllest"."""
     s = re.split(r"\s+[–-]\s+|\s*\(|:\s", str(name))[0]
-    m = re.search(r"\b(a\s+)?(tribute|hyllest|candlelight)\b|\b(the\s+)?(music|best) of\b|\bsynger\b", s, re.I)
+    m = re.search(r"\b(a\s+)?(tribute|hyllest|candlelight)\b|\b(the\s+)?(music|best) of\b|\b(synger|spiller|plays)\b", s, re.I)
     return fav_words(s[:m.start()] if m else s)
 
 

@@ -416,11 +416,14 @@ favApply();
 // artist match: same name, or the favourite's name as whole words inside a longer act name ("Bigbang – akustisk")
 // Tribute concerts count only for the tribute band itself, never for the artist they pay tribute to: for a tribute
 // act the longer-name match looks only at the band's own name («Bon Scotch (tribute til AC/DC …)» → «Bon Scotch»).
-const TRIB=/tribute|hyllest|candlelight|music of|best of|\bsynger\b/i; // «The Music of ABBA» and the like count as tributes too
-function ownName(a){ let s=String(a||"").split(/\s+[–-]\s+|\s*\(|:\s/)[0]; const m=s.search(/\b(a\s+)?(tribute|hyllest|candlelight)\b|\b(the\s+)?(music|best) of\b|\bsynger\b/i); if(m>=0) s=s.slice(0,m); return nA(s); }
+const TRIB=/tribute|hyllest|candlelight|music of|best of|\bsynger\b|\bspiller\b|\bplays\b/i; // «The Music of ABBA» and the like count as tributes too
+function ownName(a){ let s=String(a||"").split(/\s+[–-]\s+|\s*\(|:\s/)[0]; const m=s.search(/\b(a\s+)?(tribute|hyllest|candlelight)\b|\b(the\s+)?(music|best) of\b|\b(synger|spiller|plays)\b/i); if(m>=0) s=s.slice(0,m); return nA(s); }
+// a tribute act that names the artist it honours («ABBA-hyllest», «spiller AC/DC», «tribute til …») is never that artist
+const tribTo=(a,t,k)=>{ const s=" "+(t&&a.startsWith(t)?a.slice(t.length):a)+" "; return [k+" hyllest",k+" tribute","tribute to "+k,"tribute til "+k,"hyllest til "+k,"music of "+k,"best of "+k,"spiller "+k,"synger "+k,"plays "+k].some(x=>s.includes(" "+x+" ")); };
+const ownHit=(t,k)=>k===t||k.replace(/ /g,"")===t.replace(/ /g,"")||(k.length>=4&&(" "+t+" ").includes(" "+k+" "));
 function favArtistKey(name){ const n=nA(name); if(favA.has(n)) return n; const c=n.replace(/ /g,""); if(favAc.has(c)) return favAc.get(c);
-  const t=TRIB.test(String(name||""))?ownName(name):n; if(!t) return null; if(t!==n){ if(favA.has(t)) return t; const tc=t.replace(/ /g,""); if(favAc.has(tc)) return favAc.get(tc); }
-  const s=" "+t+" "; for(const k of favA.keys()){ if(k.length>=4 && s.includes(" "+k+" ")) return k; } return null; }
+  const tr=TRIB.test(String(name||"")), t=tr?ownName(name):n; if(!t) return null;
+  for(const k of favA.keys()){ if(ownHit(t,k)&&!(tr&&tribTo(n,t,k))) return k; } return null; }
 const isFavA=name=>!!favArtistKey(name);
 const isFavV=x=>favV.has(nV(x.venue+"|"+x.city));
 // «NY»: concerts from the favourites added since you last opened the calendar on this device. ADDED.day is the
@@ -586,12 +589,12 @@ function favSubs(){ const keep={fS:state.fS,fA:state.fA,fV:state.fV,fN:state.fN}
 function actHits(name){ const k=nA(name), c=k.replace(/ /g,""); let n=0;
   allGigs.forEach(g=>{ if((g.end||g.date)<todayStr) return; const a=nA(g.artist);
     if(a===k||a.replace(/ /g,"")===c){ n++; return; }
-    const t=TRIB.test(g.artist)?ownName(g.artist):a; if(!t) return;
-    if(t===k||t.replace(/ /g,"")===c||(k.length>=4&&(" "+t+" ").includes(" "+k+" "))) n++; }); return n; }
+    const tr=TRIB.test(g.artist), t=tr?ownName(g.artist):a; if(!t) return;
+    if(ownHit(t,k)&&!(tr&&tribTo(a,t,k))) n++; }); return n; }
 // upcoming tribute concerts that pay tribute to this artist (shown quietly in the list; no heart, NY mark or alert)
 function tribHits(name){ const k=nA(name); if(k.length<2) return 0; let n=0;
   allGigs.forEach(g=>{ if((g.end||g.date)<todayStr||!TRIB.test(g.artist)) return; const a=nA(g.artist), t=ownName(g.artist);
-    if(a===k||t===k||(k.length>=4&&(" "+t+" ").includes(" "+k+" "))) return; // the tribute band itself: counted as a real concert
+    if(a===k||(t&&ownHit(t,k)&&!tribTo(a,t,k))) return; // the tribute band itself: counted as a real concert
     if((" "+a+" ").includes(" "+k+" ")) n++; }); return n; }
 const konsTxt=n=>n?n+" "+(n===1?"konsert":"konserter"):"ingen konserter nå";
 function favRemoveArtist(key){ const name=favA.get(key); if(!name) return; favEx.a.delete(key); favExSave(); favOp("a",name,false);
