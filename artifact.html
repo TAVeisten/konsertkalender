@@ -259,6 +259,10 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 .favsync{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:8px;border-top:1px solid var(--line);padding-top:12px;margin-top:2px}
 .favsync .pprow input{font-size:16px}
 .favsync .favok{color:var(--ink);font-weight:600}
+.fsw.blu[aria-pressed="true"]{border-color:var(--blue)}
+.fsw.blu[aria-pressed="true"] .sw{background:var(--blue)}
+.favsync .pushrow{display:grid;gap:4px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.favsync .pushrow p{margin:0;font-size:13px;color:var(--muted)}
 @media (max-width:520px){
   .gig{grid-template-columns:52px minmax(0,1fr);gap:10px}
   .actions{grid-column:2;justify-content:flex-start;gap:4px}
@@ -372,16 +376,16 @@ let favToken=load("kk-ghtoken",""), favBase=favToken?load("kk-favbase",null):nul
 const FAV_APP=!FAV_WEB&&typeof FAVS==="object"&&FAVS?FAVS:null;
 if(FAV_APP){ favPending=favPending.filter(o=>o.t==="s");
   if(!load("kk-appmig",false)){ favPending=favPending.concat(load("kk-favs",[]).map(k=>({t:"s",k,on:true}))); store("kk-appmig",true); }
-  store("kk-pending",favPending); favBase={stars:FAV_APP.stars||[],artists:FAV_APP.artists||[],venues:FAV_APP.venues||[],seen:+FAV_APP.seen||0}; }
+  store("kk-pending",favPending); favBase={stars:FAV_APP.stars||[],artists:FAV_APP.artists||[],venues:FAV_APP.venues||[],seen:+FAV_APP.seen||0,...(FAV_APP.push===false?{push:false}:{})}; }
 function favToast(t){ let n=document.getElementById("favToast"); if(!n){ n=el("div","toast"); n.id="favToast"; n.setAttribute("role","status"); document.body.appendChild(n); }
   n.textContent=t; n.hidden=false; clearTimeout(favToast.t); favToast.t=setTimeout(()=>{ n.hidden=true; },4500); }
 function opsOn(d,ops){ const S=new Set(d.stars||[]), A=new Map((d.artists||[]).map(x=>[nA(x),x])), V=new Map((d.venues||[]).map(x=>[nV(x),x]));
-  let seen=+d.seen||0;
-  ops.forEach(o=>{ if(o.t==="n"){ seen=Math.max(seen,+o.k||0); } else if(o.t==="s"){ o.on?S.add(o.k):S.delete(o.k); } else { const M=o.t==="a"?A:V, k=o.t==="a"?nA(o.k):nV(o.k); o.on?M.set(k,o.k):M.delete(k); } });
-  return {stars:[...S].sort(), artists:[...A.values()].sort((a,b)=>a.localeCompare(b,"nb")), venues:[...V.values()].sort((a,b)=>a.localeCompare(b,"nb")),...(seen?{seen}:{})}; }
-let favSeen=0;
+  let seen=+d.seen||0, push=d.push!==false;
+  ops.forEach(o=>{ if(o.t==="p"){ push=!!o.on; } else if(o.t==="n"){ seen=Math.max(seen,+o.k||0); } else if(o.t==="s"){ o.on?S.add(o.k):S.delete(o.k); } else { const M=o.t==="a"?A:V, k=o.t==="a"?nA(o.k):nV(o.k); o.on?M.set(k,o.k):M.delete(k); } });
+  return {stars:[...S].sort(), artists:[...A.values()].sort((a,b)=>a.localeCompare(b,"nb")), venues:[...V.values()].sort((a,b)=>a.localeCompare(b,"nb")),...(seen?{seen}:{}),...(push?{}:{push:false})}; }
+let favSeen=0, favPush=true;
 function favApply(){ const d=opsOn(favBase||{stars:load("kk-favs",[])}, favPending);
-  favSeen=d.seen||0;
+  favSeen=d.seen||0; favPush=d.push!==false;
   favs.clear(); d.stars.forEach(x=>favs.add(x)); favA.clear(); d.artists.forEach(x=>favA.set(nA(x),x)); favV.clear(); d.venues.forEach(x=>favV.set(nV(x),x));
   store("kk-favs",d.stars); }
 favApply();
@@ -434,7 +438,7 @@ let favBusy=false, favAgain=false;
 async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=true; return; } favBusy=true;
   try{ for(let tries=0;tries<4;tries++){
       const {d,sha}=await favPull();
-      const remote={stars:Array.isArray(d.stars)?d.stars:[],artists:Array.isArray(d.artists)?d.artists:[],venues:Array.isArray(d.venues)?d.venues:[],...(+d.seen?{seen:+d.seen}:{})};
+      const remote={stars:Array.isArray(d.stars)?d.stars:[],artists:Array.isArray(d.artists)?d.artists:[],venues:Array.isArray(d.venues)?d.venues:[],...(+d.seen?{seen:+d.seen}:{}),...(d.push===false?{push:false}:{})};
       if(!favBase){ // first time on this device: bring its own stars along into the shared file
         const own=load("kk-favs",[]).filter(k=>!remote.stars.includes(k)&&!favPending.some(o=>o.t==="s"&&o.k===k));
         if(own.length){ favPending=own.map(k=>({t:"s",k,on:true})).concat(favPending); store("kk-pending",favPending); } }
@@ -560,6 +564,7 @@ function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
   else { ok=true; const d=favSynced?new Date(favSynced):null; t="✓ Like på alle enheter."+(d?" Sist lagret "+d.toLocaleDateString("nb-NO",{day:"numeric",month:"short"})+" kl. "+pad(d.getHours())+"."+pad(d.getMinutes())+".":""); }
   info.replaceChildren(el("span",ok?"favok":null,t), document.createElement("br"), document.createTextNode(cnt));
   row.hidden=help.hidden=!needKey; rm.hidden=!(FAV_WEB&&favToken);
+  { const pr=$("favSync")&&$("favSync").querySelector(".pushrow"); if(pr){ pr.hidden=!(FAV_WEB&&favToken); const pb=pr.querySelector(".fsw"); pb.setAttribute("aria-pressed",String(favPush)); pb.querySelector(".st").textContent=favPush?"PÅ":"AV"; } }
   $("gear").classList.toggle("dot",!state.showFest||favWarn()); }
 (function(){ const gp=$("gearPanel"), box=el("div","favsync"); box.id="favSync";
   box.append(el("h2",null,"Stjerner og favoritter"), el("p","fi",""));
@@ -568,7 +573,10 @@ function favUi(){ const box=document.getElementById("favSync"); if(!box) return;
   const err=el("p","pperr",""); err.setAttribute("role","status");
   const help=el("p","pphelp"); help.innerHTML='Lag nøkkelen på <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com</a>: velg bare repoet <b>konsertkalender</b> og tilgangen <b>Contents: Read and write</b>. Bruk samme nøkkel på mobil og Mac.';
   const rm=el("button","linkbtn","Fjern nøkkelen fra denne enheten"); rm.type="button"; rm.style.justifySelf="start";
-  box.append(row,err,help,rm); gp.appendChild(box);
+  const pr=el("div","pushrow"), pb=document.createElement("button"); pb.type="button"; pb.className="chip fsw blu"; pb.innerHTML='<span class="sw" aria-hidden="true"></span>Push-varsel ved nytt fra favorittene <span class="st"></span>';
+  pr.append(pb, el("p",null,"Varselet kommer fra morgenoppdateringen i Claude-appen. Bryteren gjelder alle enhetene dine. Boblen i Mine sider og NY-merkene vises uansett."));
+  pb.addEventListener("click",()=>{ favPending=favPending.filter(o=>o.t!=="p").concat([{t:"p",on:!favPush}]); store("kk-pending",favPending); favApply(); favUi(); favSync(); });
+  box.append(row,err,help,rm,pr); gp.appendChild(box);
   go.addEventListener("click",async()=>{ const tk=inp.value.trim(); if(!tk) return;
     if(!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(tk)){ err.textContent="Det ser ikke ut som en GitHub-nøkkel. Den begynner med github_pat_."; return; }
     go.disabled=true; err.textContent="Sjekker nøkkelen …";

@@ -441,6 +441,8 @@ def fav_file():
     out = {k: [x for x in f.get(k) or [] if isinstance(x, str)] for k in ("stars", "artists", "venues")}
     if isinstance(f.get("seen"), int) and f["seen"] > 0:
         out["seen"] = f["seen"]
+    if f.get("push") is False:  # push notification switched off in the calendar's settings (absent = on)
+        out["push"] = False
     return out
 
 
@@ -670,7 +672,10 @@ def cmd_finish(failed, highlights):
     print("MELDING:")
     print("\n".join(["- " + s_["t"] + ": " + " | ".join(s_["items"]) for s_ in secs]) or "- Ingen endringer")
     print("Totalt: %d konserter, %d festivaler" % (len(d["DATA"]), len(d["FESTS"])))
-    if fav_items:
+    if fav_items and fav_file().get("push") is False:
+        print("Push-varsel er slått av i kalenderens innstillinger, så det sendes ikke.")
+        print("VARSEL: (ingen)")
+    elif fav_items:
         names = []
         for i in fav_items:
             nm = re.sub(r"^\S+\s+", "", i)
