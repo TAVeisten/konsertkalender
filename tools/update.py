@@ -12,6 +12,9 @@ Working copy and run state live in .kk/ (not committed).
   python3 tools/update.py add <batch.json>        add concerts / festivals / towns (repeat per source)
   python3 tools/update.py venues                  list venues to look up at Kartverket this run
   python3 tools/update.py positions <pos.json>    store the Kartverket results
+  python3 tools/update.py geocode [--addresses <addr.json>]
+                                                  look the venues up at Kartverket directly (no WebFetch,
+                                                  so no permission prompts); addr.json = {"Venue|City": "Street 12"}
   python3 tools/update.py finish [--failed "A; B"] [--highlights "Artist (Scene); ..."]
                                                   write artifact.html with summary + time stamp
   python3 tools/update.py check <file.html>       check that every inline script parses
@@ -374,7 +377,11 @@ def cmd_venues():
 
 def cmd_positions(path):
     st, lines, idx, d = load()
-    p = json.load(open(path, encoding="utf-8"))
+    apply_positions(st, d, json.load(open(path, encoding="utf-8")))
+    save(st, lines, idx, d)
+
+
+def apply_positions(st, d, p):
     rec = st["pos"]
     for k, v in (p.get("found") or {}).items():
         if "|" not in k or not (isinstance(v, list) and len(v) == 2):
@@ -403,9 +410,92 @@ def cmd_positions(path):
             d["skip"].append(k)
             rec["skip"].append(k)
         d["notfound"].pop(k, None)
-    save(st, lines, idx, d)
     print("Posisjoner: %d lagt til, %d korrigert, %d uendret, %d ikke funnet, %d satt til skip"
           % (len(rec["added"]), len(rec["corrected"]), len(rec["same"]), len(rec["notfound"]), len(rec["skip"])))
+
+
+class NoNet(Exception):
+    pass
+
+
+def kv_get(url):
+    """GET a Kartverket URL with curl (goes through the workspace proxy; no WebFetch, no prompt)."""
+    r = subprocess.run(["curl", "-sS", "-f", "-m", "20", url], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise NoNet(r.stderr.strip()[:200])
+    return json.loads(r.stdout)
+
+
+def km(a, b):
+    from math import radians, cos, sqrt
+    dy = (a[0] - b[0]) * 111.2
+    dx = (a[1] - b[1]) * 111.2 * cos(radians((a[0] + b[0]) / 2))
+    return sqrt(dx * dx + dy * dy)
+
+
+def near(pt, ref, lim=30):
+    return ref is None or km(pt, ref) <= lim
+
+
+def geo_name(venue, town, ref):
+    from urllib.parse import quote
+    base = "https://ws.geonorge.no/stedsnavn/v1/navn?utkoordsys=4258&treffPerSide=5&sok=" + quote(venue)
+    for url in (base + "&kommunenavn=" + quote(town), base):
+        for n in kv_get(url).get("navn") or []:
+            rp = n.get("representasjonspunkt") or {}
+            if "nord" in rp and "øst" in rp:
+                pt = [rp["nord"], rp["øst"]]
+                if near(pt, ref):
+                    return pt
+    return None
+
+
+def geo_addr(addr, ref):
+    from urllib.parse import quote
+    url = "https://ws.geonorge.no/adresser/v1/sok?utkoordsys=4258&treffPerSide=5&sok=" + quote(addr)
+    for a in kv_get(url).get("adresser") or []:
+        rp = a.get("representasjonspunkt") or {}
+        if "lat" in rp and "lon" in rp:
+            pt = [rp["lat"], rp["lon"]]
+            if near(pt, ref):
+                return pt
+    return None
+
+
+def cmd_geocode(addr_path):
+    st, lines, idx, d = load()
+    todo = [k for _, k in todo_venues(d, st)]
+    if not todo:
+        print("Ingen spillesteder å slå opp i dag.")
+        return
+    addrs = json.load(open(addr_path, encoding="utf-8")) if addr_path else {}
+    found, missing = {}, []
+    try:
+        for k in todo:
+            venue, town = k.rsplit("|", 1)
+            c = d["CITY"].get(town)
+            ref = [c[0], c[1]] if c else None
+            pt = geo_addr(addrs[k] + " " + town, ref) if addrs.get(k) else None
+            if pt is None:
+                pt = geo_name(venue, town, ref)
+            if pt:
+                found[k] = pt
+            else:
+                missing.append(k)
+    except NoNet as e:
+        print("Kartverket kunne ikke nås (%s). Hopper over posisjoner i dag; prøv igjen i morgen. "
+              "List \"Kartverket (posisjoner)\" under --failed." % e)
+        if not found:
+            return
+    p = {"found": found}
+    if addr_path:
+        p["notfound"] = missing  # tried with name and address: wait a week before the next try
+    apply_positions(st, d, p)
+    save(st, lines, idx, d)
+    if missing and not addr_path:
+        print("UTEN TREFF (kan få gateadresse fra et WebSearch-resultat, så geocode --addresses):")
+        for k in missing:
+            print("  " + k)
 
 
 def short_date(s):
@@ -734,6 +824,8 @@ def main(a):
         cmd_venues()
     elif c == "positions" and len(a) == 2:
         cmd_positions(a[1])
+    elif c == "geocode" and len(a) in (1, 3) and (len(a) == 1 or a[1] == "--addresses"):
+        cmd_geocode(a[2] if len(a) == 3 else None)
     elif c == "finish":
         opts = dict(zip(a[1::2], a[2::2]))
         cmd_finish(opts.get("--failed"), opts.get("--highlights"))
