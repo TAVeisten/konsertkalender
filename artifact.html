@@ -436,7 +436,8 @@ const NEWD=(typeof ADDED==="object"&&ADDED)||{day:""};
 const dayNo=iso=>iso?Math.round((Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))-Date.UTC(2026,0,1))/864e5):0;
 // What you have seen is shared between devices: on the website through favoritter.json (with the GitHub key), in
 // the Claude app through its own synced storage (plus the website's value from the morning update). A visit keeps
-// the marks it opened with; after 4 seconds on screen they count as seen, so the next visit on any device is clear.
+// the marks it opened with. They count as seen only once the news has actually been on screen for 3 seconds: with the
+// «Nye fra favorittene» filter on, or with the «Nytt i dag» box opened when all unseen news is from today's update.
 let prefSeen=0, seenSnap=0, seenMarked=false, seenTimer=0;
 const seenVal=()=>Math.max(+load("kk-seenNo",0)||0, favSeen||0, prefSeen||0);
 function snapSeen(){ seenSnap=seenVal()||(dayNo(NEWD.day)-1); }
@@ -444,9 +445,13 @@ snapSeen();
 function reSnap(){ if(seenMarked) return; const o=seenSnap; snapSeen(); if(o!==seenSnap&&typeof render==="function"){ render(); } }
 function markSeen(){ const v=dayNo(NEWD.day); seenMarked=true; if(!v||v<=seenVal()) return; store("kk-seenNo",v);
   if(FAV_WEB) favOp("n",v,true,true); else if(typeof savePrefs==="function"){ prefSeen=v; savePrefs(); } }
-function seenClock(){ clearTimeout(seenTimer); if(document.visibilityState==="visible") seenTimer=setTimeout(markSeen,4000); }
+function seenNow(){ if(document.visibilityState!=="visible") return false; if(state.fN) return true;
+  const n=document.getElementById("news"); if(!n||!n.classList.contains("open")) return false;
+  const t=dayNo(NEWD.day), u=gigs.concat(festGigs).filter(g=>(g.end||g.date)>=todayStr&&newFav(g)); return u.length>0&&u.every(g=>+g.add===t); }
+function seenClock(){ let ok=false; try{ ok=!seenMarked&&seenNow(); }catch(e){}
+  if(!ok){ clearTimeout(seenTimer); seenTimer=0; return; }
+  if(!seenTimer) seenTimer=setTimeout(()=>{ seenTimer=0; let ok2=false; try{ ok2=!seenMarked&&seenNow(); }catch(e){} if(ok2) markSeen(); },3000); }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ seenMarked=false; snapSeen(); setTimeout(reSnap,1500); if(typeof render==="function") render(); } seenClock(); });
-seenClock();
 const isNewDay=n=>!!n && n>seenSnap;
 const newFav=g=>isNewDay(g.add)&&(isFavA(g.artist)||isFavV(g));
 function newFavCount(){ return gigs.concat(festGigs).filter(g=>(g.end||g.date)>=todayStr&&newFav(g)).length; }
@@ -1040,6 +1045,7 @@ function renderFests(){
 }
 
 function render(){
+  setTimeout(seenClock,0);
   placeBtn.textContent = !state.place ? "Hele Norge" : (state.place[0]==="f" ? "Hele "+state.place.slice(2) : state.place.slice(2));
   placePanel.querySelectorAll(".popt").forEach(b=>b.setAttribute("aria-current",String(b.dataset.place===state.place)));
   syncHome();
@@ -1144,7 +1150,7 @@ const SUMMARY = {"head": "2 nyheter fra favorittene · 23 nye konserter · 5 tri
   const more=document.createElement("span"); more.className="nm"; more.textContent="Vis alt"; more.hidden=true; n.appendChild(more);
   const fit=()=>{ if(n.classList.contains("open")) return; const c=n.querySelector(".nc")||t; more.hidden=n.classList.contains("st")?!n.querySelector(".ns"):!(c.scrollHeight>c.clientHeight+1); };
   fit(); addEventListener("resize",fit); document.fonts&&document.fonts.ready.then(fit);
-  const tog=()=>{ const o=n.classList.toggle("open"); n.setAttribute("aria-expanded",String(o)); more.textContent=o?"Vis mindre":"Vis alt"; };
+  const tog=()=>{ const o=n.classList.toggle("open"); n.setAttribute("aria-expanded",String(o)); more.textContent=o?"Vis mindre":"Vis alt"; if(typeof seenClock==="function") seenClock(); };
   n.addEventListener("click",e=>{ if(n.classList.contains("open")&&e.target.closest(".ns")) return; tog(); }); // collapsed to two lines by default; clicks inside the open lists do not close the box
   n.addEventListener("keydown",e=>{ if(e.target!==n) return; if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tog(); } });
 })();
