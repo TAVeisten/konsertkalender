@@ -497,8 +497,11 @@ async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=
   if(favAgain){ favAgain=false; favSync(); } }
 const state = { showFest: load("kk-showfest",true), view:"list", q:"", when:"all", from:"", to:"", place:"", genre:"", dist:"",
   venue:"", artist:"", onlyFav:false, fN:false, fS:false, fA:false, fV:false, home: load("kk-home",""), calMonth:null, calDay:"" };
-// opened from the «N nye fra favorittene» bubble in Mine sider (…/konsertkalender/?nye): start with that filter on
-try{ if(/[?&]nye(=|&|$)/.test(location.search)){ state.fN=true; history.replaceState(null,"",location.pathname+location.hash); } }catch(e){}
+// opened from the «N nye fra favorittene» bubble in Mine sider (…/konsertkalender/?nye): start with that filter on.
+// The flag is also kept for 20 seconds in this tab, so the filter survives the automatic reload to a newer version.
+try{ const q=/[?&]nye(=|&|$)/.test(location.search); let t=0; try{ t=+sessionStorage.getItem("kk-nye")||0; }catch(e){}
+  if(q){ state.fN=true; try{ sessionStorage.setItem("kk-nye",String(Date.now())); }catch(e){} history.replaceState(null,"",location.pathname+location.hash); }
+  else if(t){ if(Date.now()-t<20000) state.fN=true; try{ sessionStorage.removeItem("kk-nye"); }catch(e){} } }catch(e){}
 
 // distance
 function km(a,b){ const R=6371,r=x=>x*Math.PI/180; const dLa=r(b[0]-a[0]), dLo=r(b[1]-a[1]);
@@ -1219,7 +1222,7 @@ render();
       const top=q.getBoundingClientRect().top; if(top>90) window.scrollTo({top:scrollY+top-12,behavior:"smooth"}); },350); });
   q.addEventListener("blur",()=>document.body.classList.remove("qfocus"));
 })();</script>
-<script>(function(){ const BUILD="2c1ddb2d4908"; let busy=false;
+<script>(function(){ const BUILD="47edaed9283d"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
