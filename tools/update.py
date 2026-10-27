@@ -702,9 +702,11 @@ def cmd_finish(failed, highlights):
         named = [k.replace("|", ", ") for k in (pos["corrected"] + pos["added"])[:4]]
         if named:
             pos_lines.append("Bl.a. " + "; ".join(named))
-    if pos["notfound"]:
-        pos_lines.append("Ikke funnet denne gangen: " + "; ".join(k.replace("|", ", ") for k in pos["notfound"][:5])
-                         + (" … og %d til" % (len(pos["notfound"]) - 5) if len(pos["notfound"]) > 5 else ""))
+    # every venue in use that still has no position, also when Kartverket was down or the venue was not looked up
+    # today, so the user can send its address the same day
+    nopos = sorted((k for k in ks if k not in d["VENUE_POS"] and k not in set(d["skip"])), key=lambda k: k.lower())
+    if nopos:
+        pos_lines.append("Uten posisjon – send gjerne adressen: " + "; ".join(k.replace("|", ", ") for k in nopos))
 
     arts, vens = load_favs()
     fav_items = []

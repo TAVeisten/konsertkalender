@@ -300,7 +300,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
     <div id="gearPanel" class="panel gearpanel" hidden><h2>Innstillinger</h2><p>Når denne er på, vises hver artist som spiller på en festival som en egen konsert i listen, på dagen de spiller. Slå den av for å se bare vanlige konserter. Festivalene finner du alltid under Festivaler.</p></div>
     <h1>Konsert<span>kalender</span></h1>
     <p class="sub">Kommende konserter med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>
-    <div class="updated">Sist oppdatert <b id="upd">tirsdag 27.10.2026 kl. 08.48</b></div>
+    <div class="updated">Sist oppdatert <b id="upd">tirsdag 27.10.2026 kl. 08.55</b></div>
     <div class="news" id="news" role="button" tabindex="0" aria-expanded="false" title="Trykk for å se hele"><span class="nl">Nytt i dag</span><span class="nt" id="sum">22 nye konserter · 3 tributekonserter</span></div>
   </header>
 
@@ -1147,7 +1147,7 @@ function savePrefs(){ if(!prefRef) return; clearTimeout(savePrefs.t);
 
 </script><script>
 /* Daily update summary: written by the daily run. head = short headline shown collapsed; sections = [{t: heading, items: [bullet, ...]}]; empty sections are skipped. */
-const SUMMARY = {"head": "22 nye konserter · 3 tributekonserter", "sections": [{"t": "Nye konserter", "items": ["22 nye konserter: 22 fra TicketCo", "Bl.a. Gæsolin (Redninga), Norwegian Eagles (Redninga)", "10 passerte konserter er fjernet"]}, {"t": "Tributekonserter", "items": ["Norwegian Eagles (tribute til Eagles) (Redninga, Horten)", "Wazoo – en nær-Stones-opplevelse (tribute til Rolling Stones) (Redninga, Horten)", "Gæsolin – en hyllest til Kim Larsen (Redninga, Horten)"]}, {"t": "Spillesteder", "items": ["10 posisjoner sjekket mot Kartverket: 10 lagt til, 0 korrigert", "Bl.a. Storhamar kirke, Hamar; Tromsø domkirke, Tromsø; SALT, Oslo; Frille & Dyvekes Vinkjeller, Bergen"]}, {"t": "Kunne ikke sjekkes", "items": ["riksscena.ticketco.events (krevde tillatelse)", "Eventworld Bergen/Trondheim/Norge-sidene (feil hos nettstedet)"]}]};
+const SUMMARY = {"head": "22 nye konserter · 3 tributekonserter", "sections": [{"t": "Nye konserter", "items": ["22 nye konserter: 22 fra TicketCo", "Bl.a. Gæsolin (Redninga), Norwegian Eagles (Redninga)", "10 passerte konserter er fjernet"]}, {"t": "Tributekonserter", "items": ["Norwegian Eagles (tribute til Eagles) (Redninga, Horten)", "Wazoo – en nær-Stones-opplevelse (tribute til Rolling Stones) (Redninga, Horten)", "Gæsolin – en hyllest til Kim Larsen (Redninga, Horten)"]}, {"t": "Spillesteder", "items": ["10 posisjoner sjekket mot Kartverket: 10 lagt til, 0 korrigert", "Bl.a. Storhamar kirke, Hamar; Tromsø domkirke, Tromsø; SALT, Oslo; Frille & Dyvekes Vinkjeller, Bergen", "Uten posisjon – send gjerne adressen: Revesand Bedehus, Arendal"]}, {"t": "Kunne ikke sjekkes", "items": ["riksscena.ticketco.events (krevde tillatelse)", "Eventworld Bergen/Trondheim/Norge-sidene (feil hos nettstedet)"]}]};
 </script><script>
 (function(){ const n=document.getElementById("news"), t=document.getElementById("sum"); if(!n) return;
   try{ const S=(typeof SUMMARY==="object"&&SUMMARY)||null, secs=S&&Array.isArray(S.sections)?S.sections.filter(s=>s&&s.t&&Array.isArray(s.items)&&s.items.length):[];
