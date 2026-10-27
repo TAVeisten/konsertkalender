@@ -106,6 +106,23 @@ def key(r):
     return r[0] + "|" + norm(r[1]) + "|" + norm(r[3])
 
 
+LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
+
+
+def loose_same(a, b):
+    """Same act written two ways on the same date and venue: one name starts with (or contains) the other (e.g. "The Dahmers" /
+    "The Dahmers and Spiders", "Emma Steinbakken" / "Emma Steinbakken – Emmas Jul"), or the same words in another
+    order or with another separator (brackets ignored)."""
+    a2, b2 = re.sub(r"\(.*?\)", " ", a), re.sub(r"\(.*?\)", " ", b)
+    na, nb = norm(a2), norm(b2)
+    if na and nb and (na.startswith(nb) or nb.startswith(na)):
+        return True
+    if min(len(na), len(nb)) >= 5 and (na in nb or nb in na):  # "Darkest Hour" / "Frozen Soul og Darkest Hour"
+        return True
+    w = lambda x: frozenset(t for t in re.findall(r"\w+", x.lower()) if t not in LOOSE_STOP)
+    return bool(w(a2)) and w(a2) == w(b2)
+
+
 def dumps(v, compact=True):
     s = json.dumps(v, ensure_ascii=False, separators=(",", ":") if compact else None)
     return s.replace("</", "<\\/")
@@ -272,6 +289,22 @@ def cmd_add(path):
                 rep["replaced"] += 1
             else:
                 rep["dup"] += 1
+            continue
+        near = next((j for j, r in enumerate(d["DATA"]) if r[0] == dt and r[3] == city
+                     and r[2].lower() == venue.lower() and loose_same(r[1], artist)), None)
+        if near is not None:  # same concert under another name: keep one row, with the longest name
+            r = d["DATA"][near]
+            if len(artist) > len(r[1]):
+                ok_ = key(r)
+                r[1] = artist
+                nk = key(r)
+                have.pop(ok_, None)
+                have[nk] = near
+                if ok_ in added_now:
+                    a_ = added_now.pop(ok_)
+                    a_.update(k=nk, artist=artist)
+                    added_now[nk] = a_
+            rep["dup"] += 1
             continue
         have[k] = len(d["DATA"])
         d["DATA"].append(row)
