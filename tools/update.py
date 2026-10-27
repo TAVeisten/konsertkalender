@@ -60,7 +60,9 @@ PRIORITY = {"Rockefeller|Oslo", "John Dee|Oslo", "Sentrum Scene|Oslo", "Oslo Spe
 BIG_CITIES = ["Oslo", "Drammen", "Bergen", "Trondheim", "Stavanger", "Kristiansand", "Fornebu"]
 # venues that sources list under the wrong town
 VENUE_TOWN = {"unity arena": "Fornebu", "ullensaker kulturhus": "Jessheim", "martins pub": "Lillestrøm",
-              "fosnavåg konserthus": "Fosnavåg"}
+              "fosnavåg konserthus": "Fosnavåg", "drenga stova": "Storebø", "drengastova": "Storebø"}
+# venues that sources spell differently from the venue's own name
+VENUE_NAME = {"drenga stova": "Drengastova"}  # Gamle Prestegården, Prestanesvegen 35, Storebø (Austevoll)
 # same, but only when the source gives this town (the venue name is too common to move everywhere)
 VENUE_TOWN_AT = {("kaien", "Førde"): "Sveio"}  # Kaien café, Tingvegen 74, Førde i Sveio
 # preference when two NEW rows are the same concert: venue/organiser sites (0) > Eventworld > Songkick > TicketCo
@@ -255,6 +257,7 @@ def cmd_add(path):
             continue
         city = VENUE_TOWN.get(venue.lower(), city)
         city = VENUE_TOWN_AT.get((venue.lower(), city), city)
+        venue = VENUE_NAME.get(venue.lower(), venue)
         venue = venues_by_city.get((city, venue.lower()), venue)
         g, ok = fix_genre(genre)
         if not ok and genre:
