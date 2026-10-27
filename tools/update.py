@@ -107,7 +107,7 @@ def key(r):
 
 
 # acts that are not concerts (talks, lectures) but show up in venue programmes: never added
-NOT_CONCERT = {"hanswilhelmsteinfeld"}  # foredrag om Russland, Union Scene 2027
+NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen"}  # foredrag / ikke konserter (Union Scene)
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
 
 
