@@ -106,6 +106,8 @@ def key(r):
     return r[0] + "|" + norm(r[1]) + "|" + norm(r[3])
 
 
+# acts that are not concerts (talks, lectures) but show up in venue programmes: never added
+NOT_CONCERT = {"hanswilhelmsteinfeld"}  # foredrag om Russland, Union Scene 2027
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
 
 
@@ -271,6 +273,8 @@ def cmd_add(path):
         artist, venue, city = str(artist).strip(), str(venue).strip(), str(city).strip()
         if dt < t:
             rep["past"] += 1
+            continue
+        if norm(artist) in NOT_CONCERT:
             continue
         city = VENUE_TOWN.get(venue.lower(), city)
         city = VENUE_TOWN_AT.get((venue.lower(), city), city)
