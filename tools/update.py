@@ -823,7 +823,7 @@ def cmd_finish(failed, highlights):
     d["FAVS"] = fav_file()  # the Claude app shows the favourites as they are this morning
 
     n = now()
-    stamp = "%s %s kl. %s" % (WEEKDAYS[n.weekday()], n.strftime("%d.%m.%Y"), n.strftime("%H.%M"))
+    stamp = "%s %s kl. %s" % (WEEKDAYS[n.weekday()], n.strftime("%d.%m.%Y"), n.strftime("%H.%M.%S"))
     write_page(lines, idx, d, OUT)
     s = open(OUT, encoding="utf-8").read()
     esc = head.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

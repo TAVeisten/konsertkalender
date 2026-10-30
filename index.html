@@ -311,6 +311,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
     <h1>Konsert<span>kalender</span></h1>
     <p class="sub">Kommende konserter med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>
     <div class="updated">Sist oppdatert <b id="upd">fredag 30.10.2026 kl. 08.50</b></div>
+    <div class="updated">Siden lastet <b id="loaded"></b></div><script>(function(){var e=document.getElementById("loaded");if(e)e.textContent="kl. "+new Date().toLocaleTimeString("nb-NO",{hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Europe/Oslo"}).replace(/:/g,".");})();</script>
     <div class="news" id="news" role="button" tabindex="0" aria-expanded="false" title="Trykk for å se hele"><span class="nl">Nytt i dag</span><span class="nt" id="sum">29 nye konserter · Inferno Metal Festival: 5 nye artister</span></div>
   </header>
 
@@ -1311,7 +1312,7 @@ render();
 })();
 </script>
 <!--/ptr-->
-<script>(function(){ const BUILD="94b3d9228abc"; let busy=false;
+<script>(function(){ const BUILD="2a06b9fbe6e2"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
