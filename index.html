@@ -79,17 +79,26 @@ input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px 
 #q::placeholder{color:var(--muted)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #q{background-color:#202B38}}
 :root[data-theme="dark"] #q{background-color:#202B38}
-.selects{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:8px}
-.selects .selall{align-self:end;margin-bottom:var(--selm,5px)} /* same size as «Alle» on the line above, centred on the Sted button */
-.sel1{display:contents}
-.selects select{width:100%}
+/* Sted / Sjanger / Avstand: round buttons in one row after «Alle», like the line above; a chosen value shows in its button, lit blue */
+.selects{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.selects::-webkit-scrollbar{display:none}
+.selects .sel1,.selects .fld{display:contents}
+.selects .fld>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.selects .selbtn,.selects select{flex:0 0 auto;width:auto;min-width:0;max-width:none;font:inherit;font-size:13px;font-weight:600;line-height:1.45;color:var(--ink);background-color:transparent;border:1.5px solid var(--muted);border-radius:999px;padding:6px 28px 6px 12px;cursor:pointer;-webkit-appearance:none;appearance:none}
+.selects select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M0 0h9L4.5 6z' fill='%237A8592'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+.selects .selbtn::after{right:11px;font-size:11px}
+.selects .selbtn:hover,.selects select:not(:disabled):hover{border-color:var(--ink)}
+.selects .fld select:not([disabled]){border-color:var(--muted)}
+.selects .on,.selects .fld select.on:not([disabled]){background-color:var(--blue-bg);border-color:var(--blue)}
+.selects select:disabled{opacity:.45;cursor:default}
+.placepanel{z-index:30}
 .pwrap{position:relative}
 .selbtn{font:inherit;text-align:left;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:9px 28px 9px 10px;cursor:pointer;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
 .selbtn::after{content:"▾";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
 .panel{position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:min(320px,calc(100vw - 32px));width:max-content;max-width:calc(100vw - 32px);max-height:70vh;overflow:auto;padding:6px}
 .popt{font:inherit;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:20px;width:100%;min-height:48px;text-align:left;background:none;border:0;border-radius:8px;padding:12px 14px;cursor:pointer;color:var(--ink)}
 .popt:hover,.popt:focus-visible{background:var(--chip)}
-.popt[aria-current="true"]{font-weight:700;color:var(--accent)}
+.popt[aria-current="true"]{font-weight:700;color:var(--blue)}
 .pn{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
 .prow{display:flex;align-items:center}
 .ptog{font:inherit;font-size:20px;width:44px;flex:0 0 44px;min-height:48px;background:none;border:0;border-radius:8px;color:var(--ink);cursor:pointer;padding:0}
@@ -226,7 +235,6 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 }
 @media (min-width:760px) and (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:#080B10}}
 @media (min-width:760px){:root[data-theme="dark"] body{background:#080B10}}
-@media (max-width:620px){.selects{grid-template-columns:repeat(2,minmax(0,1fr))}.sel1{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;row-gap:3px;grid-column:1/-1;min-width:0;position:relative}.sel1 .pwrap{display:contents}.sel1 #placeLbl{grid-column:2}.sel1 .selall{grid-column:1;grid-row:2;align-self:center;margin:0}.sel1 #placeBtn{grid-column:2;grid-row:2}}
 
 /* favourites: stars (single concerts), hearts (artists), pins (venues) */
 :root{--heart:#C2185B}
@@ -322,9 +330,9 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
     </div>
     <div class="selects">
       <div class="sel1"><button id="selAll" class="chip selall" type="button" aria-pressed="true" title="Nullstill sted, sjanger og avstand">Alle</button>
-      <div class="fld pwrap"><span id="placeLbl">Sted</span><button id="placeBtn" class="selbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-labelledby="placeLbl placeBtn">Hele Norge</button><div id="placePanel" class="panel" hidden></div></div></div>
-      <label class="fld" for="genre"><span>Sjanger</span><select id="genre"><option value="">Alle sjangre</option></select></label>
-      <label class="fld" for="dist"><span>Avstand</span><select id="dist"><option value="">Alle avstander</option><option value="1">Innen 1 km</option><option value="5">Innen 5 km</option><option value="10">Innen 10 km</option><option value="25">Innen 25 km</option><option value="50">Innen 50 km</option><option value="100">Innen 100 km</option><option value="200">Innen 200 km</option></select></label>
+      <div class="fld pwrap"><span id="placeLbl">Sted</span><button id="placeBtn" class="selbtn" type="button" aria-haspopup="true" aria-expanded="false" aria-labelledby="placeLbl placeBtn">Sted</button><div id="placePanel" class="panel placepanel" hidden></div></div></div>
+      <label class="fld" for="genre"><span>Sjanger</span><select id="genre"><option value="">Sjanger</option></select></label>
+      <label class="fld" for="dist"><span>Avstand</span><select id="dist"><option value="">Avstand</option><option value="1">Innen 1 km</option><option value="5">Innen 5 km</option><option value="10">Innen 10 km</option><option value="25">Innen 25 km</option><option value="50">Innen 50 km</option><option value="100">Innen 100 km</option><option value="200">Innen 200 km</option></select></label>
     </div>
     <div class="chips" id="pins"></div>
     <div class="status">
@@ -755,7 +763,20 @@ const placeBtn=$("placeBtn"), placePanel=$("placePanel");
     placePanel.appendChild(grp);
   });
 })();
-placeBtn.addEventListener("click",e=>{ e.stopPropagation(); placePanel.hidden=!placePanel.hidden; placeBtn.setAttribute("aria-expanded",String(!placePanel.hidden)); });
+document.querySelector(".bar").appendChild(placePanel);
+placeBtn.addEventListener("click",e=>{ e.stopPropagation(); if(placePanel.hidden){ const br=document.querySelector(".bar").getBoundingClientRect(), cr=placeBtn.getBoundingClientRect();
+    placePanel.style.top=(cr.bottom-br.top+4)+"px"; placePanel.style.left=Math.max(0,Math.min(cr.left-br.left, br.width-placePanel.offsetWidth))+"px"; }
+  placePanel.hidden=!placePanel.hidden; placeBtn.setAttribute("aria-expanded",String(!placePanel.hidden)); });
+document.querySelector(".selects").addEventListener("scroll",()=>{ if(!placePanel.hidden){ placePanel.hidden=true; placeBtn.setAttribute("aria-expanded","false"); } },{passive:true});
+// Sjanger / Avstand: the open list says «Alle sjangre» / «Alle avstander», the closed button just «Sjanger» / «Avstand»; each button is as wide as its text
+const SELN={genre:["Sjanger","Alle sjangre"], dist:["Avstand","Alle avstander"]};
+function fitSel(sel){ try{ const c=fitSel.c||(fitSel.c=document.createElement("canvas").getContext("2d")), cs=getComputedStyle(sel);
+  c.font=cs.fontWeight+" "+cs.fontSize+" "+cs.fontFamily; const o=sel.options[sel.selectedIndex], t=o?o.text:"";
+  sel.style.width=Math.ceil(c.measureText(t).width+parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight)+parseFloat(cs.borderLeftWidth)+parseFloat(cs.borderRightWidth)+2)+"px"; }catch(e){} }
+["genre","dist"].forEach(id=>{ const sel=$(id);
+  sel.addEventListener("focus",()=>{ sel.options[0].text=SELN[id][1]; });
+  const back=()=>{ sel.options[0].text=SELN[id][0]; fitSel(sel); }; sel.addEventListener("blur",back); sel.addEventListener("change",back); });
+try{ document.fonts&&document.fonts.ready.then(()=>{ fitSel($("genre")); fitSel($("dist")); }); }catch(e){}
 placePanel.addEventListener("click",e=>{ e.stopPropagation(); const b=e.target.closest(".popt"); if(!b) return;
   const pv=b.dataset.place;
   if(pv.startsWith("v:")){ state.venue=pv.slice(2); state.place="c:"+pv.split("|")[1]; state.view= state.view==="fests"?"list":state.view; }
@@ -1112,7 +1133,7 @@ function renderFests(){
 
 function render(){
   setTimeout(seenClock,0);
-  placeBtn.textContent = !state.place ? "Hele Norge" : (state.place[0]==="f" ? "Hele "+state.place.slice(2) : state.place.slice(2));
+  placeBtn.textContent = !state.place ? "Sted" : (state.place[0]==="f" ? "Hele "+state.place.slice(2) : state.place.slice(2)); placeBtn.classList.toggle("on",!!state.place);
   placePanel.querySelectorAll(".popt").forEach(b=>b.setAttribute("aria-current",String(b.dataset.place===state.place)));
   syncHome();
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.view===state.view)));
@@ -1125,7 +1146,8 @@ function render(){
     favPanel.querySelector(".fclr").hidden=!ic; if(!favPanel.hidden) favCounts(); }
   $("dates").hidden = state.when!=="custom";
   whenEl.style.display = state.view==="cal" ? "none" : "";
-  const dist=$("dist"); dist.disabled=!state.home; if(!state.home){ dist.value=""; state.dist=""; dist.options[0].textContent="Velg hjemsted først"; } else dist.options[0].textContent="Alle avstander";
+  const dist=$("dist"); dist.disabled=!state.home; if(!state.home){ dist.value=""; state.dist=""; } dist.title=state.home?"":"Velg hjemsted under «Nær meg» først"; if(document.activeElement!==dist) dist.options[0].textContent="Avstand";
+  dist.classList.toggle("on",!!state.dist); { const gs=$("genre"); gs.classList.toggle("on",!!state.genre); fitSel(gs); } fitSel(dist);
   const pins=$("pins"); pins.replaceChildren();
   if(state.venue){ const b=el("button","chip pin","Spillested: "+state.venue.split("|")[0]+"  ✕"); b.type="button"; b.dataset.k="venue"; pins.appendChild(b);
     const on=favV.has(nV(state.venue)); const f=el("button","chip pinfav",on?"📍 Favorittsted":"📍 Gjør til favoritt"); f.type="button"; f.dataset.fv=state.venue; f.setAttribute("aria-pressed",String(on)); pins.appendChild(f); }
@@ -1289,7 +1311,7 @@ render();
 })();
 </script>
 <!--/ptr-->
-<script>(function(){ const BUILD="b3fd830eb894"; let busy=false;
+<script>(function(){ const BUILD="94b3d9228abc"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
