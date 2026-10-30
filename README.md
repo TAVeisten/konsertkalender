@@ -1,6 +1,6 @@
 # Konsertkalender Norge
 
-Kommende konserter i Norge, med hovedvekt på Oslo-området, Bergen, Trondheim og Drammen.
+Kommende konserter i Norge, med hovedvekt på Oslo- og Drammensområdet, Bergen og Trondheim.
 
 - `index.html` er selve appen (GitHub Pages).
 - `artifact.html` er en kopi av Claude-artefakten slik den ble publisert sist (med alle data).
