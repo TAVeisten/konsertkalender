@@ -556,9 +556,9 @@ const $ = id => document.getElementById(id);
 const whenEl=$("when");
 [["all","Alle"],["today","I kveld"],["weekend","Helgen"],["week","7 dager"],["30","30 dager"],["custom","Velg datoer"]].forEach(([k,l])=>{
   const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=l; b.dataset.k=k; whenEl.appendChild(b); });
-// "Favoritter ▾": one chip first in the row; its menu has the three filters, which can be combined
+// "Favoritter ▾": one chip right after «Alle» in the row; its menu has the three filters, which can be combined
 const favChip=document.createElement("button"); favChip.type="button"; favChip.className="chip fmenu"; favChip.dataset.k="__favmenu";
-favChip.setAttribute("aria-haspopup","true"); favChip.setAttribute("aria-expanded","false"); whenEl.insertBefore(favChip,whenEl.firstChild);
+favChip.setAttribute("aria-haspopup","true"); favChip.setAttribute("aria-expanded","false"); whenEl.insertBefore(favChip,whenEl.firstChild.nextSibling); // after «Alle», so both «Alle» buttons stand first on their line
 const favPanel=document.createElement("div"); favPanel.className="panel favpanel"; favPanel.hidden=true; favPanel.setAttribute("role","menu");
 { const h=el("div","fhead"); h.innerHTML="Antall<br>konserter"; favPanel.appendChild(h); }
 // icons drawn as SVG so ★ ♥ 📍 get the same size and spacing on iPhone, iPad and Mac (emoji fonts differ)
@@ -1288,7 +1288,7 @@ render();
 })();
 </script>
 <!--/ptr-->
-<script>(function(){ const BUILD="aec12ab1ff01"; let busy=false;
+<script>(function(){ const BUILD="bfb5c9fad4a7"; let busy=false;
   const check=async()=>{ if(busy) return; busy=true; try{
       const r=await fetch(location.pathname,{cache:"reload"}); const t=await r.text(); const m=t.match(/const BUILD="([0-9a-f]+)"/);
       if(m&&m[1]!==BUILD){ let seen=null; try{ seen=sessionStorage.getItem("kk-rl"); sessionStorage.setItem("kk-rl",m[1]); }catch(e){} if(seen!==m[1]){ location.reload(); return; } } }catch(e){} busy=false; };
