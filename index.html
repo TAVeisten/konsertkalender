@@ -313,7 +313,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
     <h1>Konsert<span>kalender</span></h1>
     <p class="sub">Kommende konserter med hovedvekt på Oslo- og Drammensområdet, Bergen og Trondheim. <b class="startip">Trykk <span aria-hidden="true">☆</span> på det du vil få med deg.</b></p>
     <div class="updated">Sist oppdatert <b id="upd">fredag 30.10.2026 kl. 08.50</b></div>
-    <div class="updated">Siden lastet <b id="loaded"></b></div><script>(function(){var e=document.getElementById("loaded");if(e)e.textContent="kl. "+new Date().toLocaleTimeString("nb-NO",{hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Europe/Oslo"}).replace(/:/g,".");})();</script>
+    <div class="updated">Siden lastet kl. <b id="loaded"></b></div><script>(function(){/* Bare dato og klokkeslett i fet skrift, som på de andre sidene */var u=document.getElementById("upd"),m=u&&/^(.*?) kl\. (.+)$/.exec(u.textContent.trim());if(m){var s=document.createElement("span"),a=document.createElement("b"),c=document.createElement("b");a.textContent=m[1];c.textContent=m[2];s.append(a," kl. ",c);u.replaceWith(s);}var e=document.getElementById("loaded");if(e)e.textContent=new Date().toLocaleTimeString("nb-NO",{hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Europe/Oslo"}).replace(/:/g,".");})();</script>
     <div class="news" id="news" role="button" tabindex="0" aria-expanded="false" title="Trykk for å se hele"><span class="nl">Nytt i dag</span><span class="nt" id="sum">29 nye konserter · Inferno Metal Festival: 5 nye artister</span></div>
   </header>
 
