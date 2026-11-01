@@ -542,6 +542,11 @@ def cmd_geocode(addr_path):
     st, lines, idx, d = load()
     todo = [k for _, k in todo_venues(d, st)]
     addrs = json.load(open(addr_path, encoding="utf-8")) if addr_path else {}
+    # addresses the user has sent are kept in the repo (adresser.json) and tried on every run until they are found
+    saved_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "adresser.json")
+    if os.path.exists(saved_path):
+        for k, v in json.load(open(saved_path, encoding="utf-8")).items():
+            addrs.setdefault(k, v)
     # an address that was looked up by hand is always tried, also for venues that missed earlier today
     todo += [k for k in addrs if k not in todo and k not in d["VENUE_POS"]]
     if not todo:
