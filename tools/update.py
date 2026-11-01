@@ -87,7 +87,7 @@ VENUE_TOWN = {"unity arena": "Fornebu", "ullensaker kulturhus": "Jessheim", "mar
 # venues that sources spell differently from the venue's own name
 VENUE_NAME = {"drenga stova": "Drengastova"}  # Gamle Prestegården, Prestanesvegen 35, Storebø (Austevoll)
 # same, but only when the source gives this town (the venue name is too common to move everywhere)
-VENUE_TOWN_AT = {("kaien", "Førde"): "Sveio"}  # Kaien café, Tingvegen 74, Førde i Sveio
+VENUE_TOWN_AT = {("kaien", "Førde"): "Sveio", ("hangaren", "Oslo"): "Fornebu"}  # Kaien café, Tingvegen 74, Førde i Sveio
 # preference when two NEW rows are the same concert: venue/organiser sites (0) > Eventworld > Songkick > TicketCo
 PREF = {"Eventworld": 1, "Songkick": 2, "TicketCo": 3}
 TRIBUTE_RE = re.compile(r"tribute|hyllest|candlelight", re.I)
