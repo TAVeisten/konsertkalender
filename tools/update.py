@@ -51,7 +51,7 @@ STATE = os.path.join(KK, "state.json")
 # concerts), or it is named in finish --failed with a reason. finish refuses to run until all are covered, so no
 # source or place can be skipped in silence.
 CHECKLIST = [
-    "Eventworld Oslo", "Eventworld andre byer", "Fever", "TicketCo", "Songkick",
+    "Eventworld Oslo", "Eventworld andre byer", "Konserter i Norge", "Fever", "TicketCo", "Songkick",
     "Oslo Spektrum", "Unity Arena", "Union Scene", "Rockefeller", "John Dee", "Sentrum Scene",
     "Kometen", "Ekebergsletta", "Valle Hovin", "Tribute",
     "Øyafestivalen", "Tons of Rock", "Piknik i Parken", "Inferno Metal Festival", "by:Larm", "Oslo World",
