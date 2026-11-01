@@ -65,10 +65,37 @@ CHECKLIST = [
 ]
 
 
+FESTIVAL_ITEMS = [
+    "Øyafestivalen", "Tons of Rock", "Piknik i Parken", "Inferno Metal Festival", "by:Larm", "Oslo World",
+    "Oslo Jazzfestival", "Musikkfest Oslo", "Ultima", "Oslo Kammermusikkfestival", "Drøbak Havnefestival",
+    "OverOslo", "Dølajazz", "Kongsberg Jazzfestival", "Ypsilon", "Asker Live", "Bærum Jazzfestival",
+    "Bergenfest", "Festspillene i Bergen", "Bergen Calling", "Nattjazz", "Borealis", "Beyond the Gates",
+    "Pstereo", "Olavsfestdagene", "Trondheim Jazzfestival", "Trondheim Calling", "NEON",
+    "Nye festivaler i fokusområdene",
+]
+WEEKLY_DAY = 0  # Monday: every festival is checked and new festivals are searched for
+
+
+def festivals_due(d, t):
+    """(daily, weekly): festival checklist items to check today, and those left for Monday.
+    Daily = the festival has dates for an upcoming edition and its line-up is not complete yet
+    (that is when artists and days are being released). All others are checked on Mondays."""
+    if date.fromisoformat(t).weekday() == WEEKLY_DAY:
+        return list(FESTIVAL_ITEMS), []
+    active = [f["name"].lower() for f in d["FESTS"] if f.get("end", "") >= t and not f.get("lineupComplete")]
+    daily, weekly = [], []
+    for k in FESTIVAL_ITEMS:
+        kl = k.lower()
+        hit = k != "Nye festivaler i fokusområdene" and any(kl == n or kl in n or n in kl for n in active)
+        (daily if hit else weekly).append(k)
+    return daily, weekly
+
+
 def checklist_missing(st, failed=""):
     done = {x.lower() for x in st.get("checked", [])}
     fl = (failed or "").lower()
-    return [k for k in CHECKLIST if k.lower() not in done and k.lower() not in fl]
+    not_due = set(st.get("not_due", []))
+    return [k for k in CHECKLIST if k not in not_due and k.lower() not in done and k.lower() not in fl]
 OUT = os.path.join(ROOT, "artifact.html")
 TZ = ZoneInfo("Europe/Oslo")
 
@@ -257,6 +284,11 @@ def cmd_start(path):
     fut = [r for r in d["DATA"] if r[0] >= t]
     print("Start %s: %d konserter (%d fra i dag), %d festivaler, %d kilder, %d steder med posisjon"
           % (t, len(d["DATA"]), len(fut), len(d["FESTS"]), len(d["SOURCES"]), len(d["VENUE_POS"])))
+    daily, weekly = festivals_due(d, t)
+    st["not_due"] = weekly
+    json.dump(st, open(STATE, "w", encoding="utf-8"), ensure_ascii=False)
+    print("Festivaler å sjekke i dag (%d): %s" % (len(daily), ", ".join(daily) or "ingen"))
+    print("Venter til mandag (%d): %s" % (len(weekly), ", ".join(weekly) or "ingen"))
     print("Festivaler (navn | datoer | artister, med dag | komplett):")
     for f in d["FESTS"]:
         lu = f.get("lineup", [])
@@ -921,7 +953,8 @@ def cmd_finish(failed, highlights):
 def cmd_status():
     st = json.load(open(STATE, encoding="utf-8")) if os.path.exists(STATE) else {}
     miss = checklist_missing(st)
-    print("Sjekket: %d av %d" % (len(CHECKLIST) - len(miss), len(CHECKLIST)))
+    due = len(CHECKLIST) - len(st.get("not_due", []))
+    print("Sjekket: %d av %d (%d festivaler venter til mandag)" % (due - len(miss), due, len(st.get("not_due", []))))
     print("Gjenstår:\n  " + ("\n  ".join(miss) if miss else "(ingenting)"))
 
 
