@@ -541,10 +541,12 @@ def geo_addr(addr, ref):
 def cmd_geocode(addr_path):
     st, lines, idx, d = load()
     todo = [k for _, k in todo_venues(d, st)]
+    addrs = json.load(open(addr_path, encoding="utf-8")) if addr_path else {}
+    # an address that was looked up by hand is always tried, also for venues that missed earlier today
+    todo += [k for k in addrs if k not in todo and k not in d["VENUE_POS"]]
     if not todo:
         print("Ingen spillesteder å slå opp i dag.")
         return
-    addrs = json.load(open(addr_path, encoding="utf-8")) if addr_path else {}
     found, missing = {}, []
     try:
         for k in todo:
@@ -552,6 +554,10 @@ def cmd_geocode(addr_path):
             c = d["CITY"].get(town)
             ref = [c[0], c[1]] if c else None
             pt = geo_addr(addrs[k] + " " + town, ref) if addrs.get(k) else None
+            if pt is None and addrs.get(k) and "," in addrs[k]:
+                # "Street 1, 1234 Place": try the street with the postcode and place as written
+                st_, rest = addrs[k].split(",", 1)
+                pt = geo_addr(st_.strip() + " " + rest.strip(), ref) or geo_addr(st_.strip() + " " + town, ref)
             if pt is None:
                 pt = geo_name(venue, town, ref)
             if pt:
