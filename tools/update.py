@@ -74,13 +74,14 @@ FESTIVAL_ITEMS = [
     "Nye festivaler i fokusområdene",
 ]
 WEEKLY_DAY = 0  # Monday: every festival is checked and new festivals are searched for
+DAILY_ALL = True  # the user's choice 01.11.2026: every festival is checked every day (the calendar is "updated daily")
 
 
 def festivals_due(d, t):
     """(daily, weekly): festival checklist items to check today, and those left for Monday.
     Daily = the festival has dates for an upcoming edition and its line-up is not complete yet
     (that is when artists and days are being released). All others are checked on Mondays."""
-    if date.fromisoformat(t).weekday() == WEEKLY_DAY:
+    if DAILY_ALL or date.fromisoformat(t).weekday() == WEEKLY_DAY:
         return list(FESTIVAL_ITEMS), []
     active = [f["name"].lower() for f in d["FESTS"] if f.get("end", "") >= t and not f.get("lineupComplete")]
     daily, weekly = [], []
