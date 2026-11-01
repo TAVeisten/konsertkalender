@@ -57,6 +57,8 @@ CHECKLIST = [
     "Øyafestivalen", "Tons of Rock", "Piknik i Parken", "Inferno Metal Festival", "by:Larm", "Oslo World",
     "Oslo Jazzfestival", "Musikkfest Oslo", "Ultima", "Oslo Kammermusikkfestival", "Drøbak Havnefestival",
     "OverOslo", "Dølajazz", "Kongsberg Jazzfestival", "Ypsilon", "Asker Live", "Bærum Jazzfestival",
+    "Bergenfest", "Festspillene i Bergen", "Bergen Calling", "Nattjazz", "Borealis", "Beyond the Gates",
+    "Pstereo", "Olavsfestdagene", "Trondheim Jazzfestival", "Trondheim Calling", "NEON",
     "Nye festivaler i fokusområdene",
     "Lier", "Tranby", "Svelvik", "Sande", "Mjøndalen", "Hokksund", "Kongsberg",
     "Asker", "Røyken", "Sandvika", "Bærum",
@@ -134,7 +136,7 @@ def key(r):
 NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen"}  # foredrag / ikke konserter (Union Scene)
 # festivals we do not follow: single acts there are not added as concerts (user's choice 01.11.2026)
 SKIP_FESTIVAL_VENUES = {"palmesus", "liverpoolfestivalen", "treungen festival", "rakfiskfestivalen",
-                        "smeltedigelen", "festspillene i bergen"}
+                        "smeltedigelen"}
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
 
 
