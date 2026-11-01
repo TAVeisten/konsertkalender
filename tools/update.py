@@ -742,7 +742,8 @@ def cmd_finish(failed, highlights):
             items.append("Bl.a. " + ", ".join(hl))
         if removed:
             items.append(pl(removed, "passert konsert er fjernet", "passerte konserter er fjernet"))
-        secs.append({"t": "Nye konserter", "items": items})
+        # No new concerts: only the clean-up line is left, so call the section that instead of «Nye konserter»
+        secs.append({"t": "Nye konserter" if added else "Opprydding", "items": items})
     if prio:
         secs.append({"t": "Prioriterte scener", "items": ["%s (%s, %s)" % (a["artist"], a["venue"], short_date(a["date"])) for a in prio]})
     if trib:
@@ -772,6 +773,9 @@ def cmd_finish(failed, highlights):
         head = "Ingen nye konserter i dag · %s: %s" % (name, pl(n, "ny artist", "nye artister"))
     else:
         head = "Ingen nye konserter i dag"
+    # Many sources failed and nothing came in: say so, so an empty day is not mistaken for a full check
+    if not added and len(fl) >= 3:
+        head = head.replace("Ingen nye konserter i dag", "Få kilder kunne sjekkes i dag")
     if fav_items:
         head = "%s fra favorittene · %s" % (pl(len(fav_items), "nyhet", "nyheter"), head)
     d["SUMMARY"] = {"head": head, "sections": secs}
