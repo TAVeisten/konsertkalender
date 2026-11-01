@@ -56,7 +56,8 @@ CHECKLIST = [
     "Kometen", "Ekebergsletta", "Valle Hovin", "Tribute",
     "Øyafestivalen", "Tons of Rock", "Piknik i Parken", "Inferno Metal Festival", "by:Larm", "Oslo World",
     "Oslo Jazzfestival", "Musikkfest Oslo", "Ultima", "Oslo Kammermusikkfestival", "Drøbak Havnefestival",
-    "OverOslo", "Dølajazz", "Kongsberg Jazzfestival",
+    "OverOslo", "Dølajazz", "Kongsberg Jazzfestival", "Ypsilon", "Asker Live", "Bærum Jazzfestival",
+    "Nye festivaler i fokusområdene",
     "Lier", "Tranby", "Svelvik", "Sande", "Mjøndalen", "Hokksund", "Kongsberg",
     "Asker", "Røyken", "Sandvika", "Bærum",
 ]
