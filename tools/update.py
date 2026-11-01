@@ -18,9 +18,12 @@ Working copy and run state live in .kk/ (not committed).
   python3 tools/update.py finish [--failed "A; B"] [--highlights "Artist (Scene); ..."]
                                                   write artifact.html with summary + time stamp
   python3 tools/update.py check <file.html>       check that every inline script parses
+  python3 tools/update.py status                  list checklist items not yet checked this run
 
 batch.json:
   {"source": "Eventworld",                       default source name for rows without one
+   "checked": ["Eventworld Oslo"],               checklist items this batch covers (see CHECKLIST / status);
+                                                  send it even when nothing new was found
    "concerts": [["2026-11-01","Artist","Venue","City","Genre"],          list or object rows;
                 ["2026-11-02","Britallica (Britney Spears-metaltribute)","Kometen","Drammen","Metal","TicketTailor",true]],
                                                   6th = source name, 7th = true for a tribute concert
@@ -43,6 +46,26 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KK = os.path.join(ROOT, ".kk")
 PAGE = os.path.join(KK, "page.html")
 STATE = os.path.join(KK, "state.json")
+
+# Every run must account for each of these: either a batch file marks it as checked ("checked": [...], also with no
+# concerts), or it is named in finish --failed with a reason. finish refuses to run until all are covered, so no
+# source or place can be skipped in silence.
+CHECKLIST = [
+    "Eventworld Oslo", "Eventworld andre byer", "Fever", "TicketCo", "Songkick",
+    "Oslo Spektrum", "Unity Arena", "Union Scene", "Rockefeller", "John Dee", "Sentrum Scene",
+    "Kometen", "Ekebergsletta", "Valle Hovin", "Tribute",
+    "Øyafestivalen", "Tons of Rock", "Piknik i Parken", "Inferno Metal Festival", "by:Larm", "Oslo World",
+    "Oslo Jazzfestival", "Musikkfest Oslo", "Ultima", "Oslo Kammermusikkfestival", "Drøbak Havnefestival",
+    "OverOslo", "Dølajazz", "Kongsberg Jazzfestival",
+    "Lier", "Tranby", "Svelvik", "Sande", "Mjøndalen", "Hokksund", "Kongsberg",
+    "Asker", "Røyken", "Sandvika", "Bærum",
+]
+
+
+def checklist_missing(st, failed=""):
+    done = {x.lower() for x in st.get("checked", [])}
+    fl = (failed or "").lower()
+    return [k for k in CHECKLIST if k.lower() not in done and k.lower() not in fl]
 OUT = os.path.join(ROOT, "artifact.html")
 TZ = ZoneInfo("Europe/Oslo")
 
@@ -238,6 +261,16 @@ def cmd_start(path):
 def cmd_add(path):
     st, lines, idx, d = load()
     b = json.load(open(path, encoding="utf-8"))
+    ck = b.get("checked") or []
+    if isinstance(ck, str):
+        ck = [ck]
+    known = {k.lower(): k for k in CHECKLIST}
+    for x in ck:
+        k = known.get(str(x).strip().lower())
+        if not k:
+            print("ADVARSEL: ukjent sjekkpunkt %r (gyldige: se update.py status)" % x)
+        elif k not in st.setdefault("checked", []):
+            st["checked"].append(k)
     t = st["today"]
     default_src = b.get("source", "")
     orig = set(st["orig_keys"])
@@ -646,6 +679,10 @@ def check_scripts(path):
 
 def cmd_finish(failed, highlights):
     st, lines, idx, d = load()
+    miss = checklist_missing(st, failed)
+    if miss:
+        die("STOPP: disse er verken sjekket eller ført opp under --failed:\n  " + "\n  ".join(miss) +
+            "\nSjekk dem (batch-fil med \"checked\": [...]), eller før dem opp i --failed med grunn.")
     old_c = (d.get("ADDED") or {}).get("c") or []
     n_start = len(st["orig_keys"])
     prev_day = {}
@@ -861,6 +898,13 @@ def cmd_finish(failed, highlights):
         print("VARSEL: (ingen)")
 
 
+def cmd_status():
+    st = json.load(open(STATE, encoding="utf-8")) if os.path.exists(STATE) else {}
+    miss = checklist_missing(st)
+    print("Sjekket: %d av %d" % (len(CHECKLIST) - len(miss), len(CHECKLIST)))
+    print("Gjenstår:\n  " + ("\n  ".join(miss) if miss else "(ingenting)"))
+
+
 def main(a):
     if len(a) < 1:
         die(__doc__)
@@ -869,6 +913,8 @@ def main(a):
         cmd_start(a[1])
     elif c == "add" and len(a) == 2:
         cmd_add(a[1])
+    elif c == "status":
+        cmd_status()
     elif c == "venues":
         cmd_venues()
     elif c == "positions" and len(a) == 2:
