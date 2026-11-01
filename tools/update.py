@@ -131,6 +131,9 @@ def key(r):
 
 # acts that are not concerts (talks, lectures) but show up in venue programmes: never added
 NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen"}  # foredrag / ikke konserter (Union Scene)
+# festivals we do not follow: single acts there are not added as concerts (user's choice 01.11.2026)
+SKIP_FESTIVAL_VENUES = {"palmesus", "liverpoolfestivalen", "treungen festival", "rakfiskfestivalen",
+                        "smeltedigelen", "festspillene i bergen"}
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
 
 
@@ -307,7 +310,7 @@ def cmd_add(path):
         if dt < t:
             rep["past"] += 1
             continue
-        if norm(artist) in NOT_CONCERT:
+        if norm(artist) in NOT_CONCERT or venue.lower() in SKIP_FESTIVAL_VENUES:
             continue
         city = VENUE_TOWN.get(venue.lower(), city)
         city = VENUE_TOWN_AT.get((venue.lower(), city), city)
