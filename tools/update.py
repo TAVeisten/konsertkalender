@@ -310,7 +310,10 @@ def cmd_add(path):
         if dt < t:
             rep["past"] += 1
             continue
-        if norm(artist) in NOT_CONCERT or venue.lower() in SKIP_FESTIVAL_VENUES:
+        if norm(artist) in NOT_CONCERT or venue.lower() in SKIP_FESTIVAL_VENUES or "festival" in venue.lower():
+            # single acts at festivals are never added as concerts (user's rule 01.11.2026);
+            # festivals are added only as festivals, in step 4
+            rep.setdefault("festskip", []).append("%s (%s)" % (artist, venue))
             continue
         city = VENUE_TOWN.get(venue.lower(), city)
         city = VENUE_TOWN_AT.get((venue.lower(), city), city)
