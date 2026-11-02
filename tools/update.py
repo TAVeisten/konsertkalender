@@ -38,7 +38,7 @@ batch.json:
 pos.json:
   {"found": {"Venue|City": [lat, lon]}, "notfound": ["Venue|City"], "skip": ["Name|City"]}
 """
-import json, os, re, sys, shutil, subprocess, unicodedata
+import json, os, re, sys, shutil, subprocess, time, unicodedata
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
@@ -520,6 +520,19 @@ def apply_positions(st, d, p):
             rec["corrected"].append(k)
         else:
             rec["same"].append(k)
+    for k, v in (p.get("other") or {}).items():
+        # position from another source while Kartverket is down: used now, checked against Kartverket on a later run
+        if "|" not in k or not (isinstance(v, list) and len(v) == 2):
+            print("HOPPET OVER posisjon: %s" % k)
+            continue
+        new = [round(float(v[0]), 4), round(float(v[1]), 4)]
+        if not (57.5 < new[0] < 71.5 and 4 < new[1] < 31.5):
+            print("HOPPET OVER posisjon utenfor Norge: %s %s" % (k, new))
+            continue
+        old = d["VENUE_POS"].get(k)
+        d["VENUE_POS"][k] = new
+        d["notfound"].pop(k, None)
+        (rec["added"] if old is None else rec["corrected"]).append(k)
     for k in p.get("notfound") or []:
         d["notfound"][k] = st["today"]
         rec["notfound"].append(k)
@@ -595,8 +608,19 @@ def cmd_geocode(addr_path):
         print("Ingen spillesteder å slå opp i dag.")
         return
     found, missing = {}, []
-    try:
-        for k in todo:
+
+    def save_addrs(keys):
+        # addresses that are known but have no position yet stay in adresser.json until Kartverket finds them
+        saved = json.load(open(saved_path, encoding="utf-8")) if os.path.exists(saved_path) else {}
+        for k in keys:
+            if addrs.get(k):
+                saved[k] = addrs[k]
+        for k in found:
+            saved.pop(k, None)
+        json.dump(saved, open(saved_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+    def lookup(keys):
+        for k in keys:
             venue, town = k.rsplit("|", 1)
             c = d["CITY"].get(town)
             ref = [c[0], c[1]] if c else None
@@ -611,11 +635,30 @@ def cmd_geocode(addr_path):
                 found[k] = pt
             else:
                 missing.append(k)
-    except NoNet as e:
-        print("Kartverket kunne ikke nås (%s). Hopper over posisjoner i dag; prøv igjen i morgen. "
-              "List \"Kartverket (posisjoner)\" under --failed." % e)
+
+    down = None
+    try:
+        lookup(todo)
+    except NoNet:
+        # one more try after a minute before Kartverket is counted as down
+        time.sleep(60)
+        try:
+            lookup([k for k in todo if k not in found and k not in missing])
+        except NoNet as e:
+            down = e
+    if down:
+        left = [k for k in todo if k not in found and k not in missing]
+        save_addrs(left + missing)
+        print("Kartverket kunne ikke nås (%s). Adressene er lagret i adresser.json og prøves igjen hos Kartverket i morgen. "
+              "List \"Kartverket (posisjoner)\" under --failed." % down)
+        print("FINN POSISJON PÅ ANNEN MÅTE for disse (koordinater vist for akkurat dette stedet på en side fra et søkeresultat), "
+              "skriv {\"other\": {\"Sted|By\": [lat, lon]}} til en fil og kjør positions <fil>:")
+        for k in left + missing:
+            print("  " + k + ("  (adresse: %s)" % addrs[k] if addrs.get(k) else ""))
         if not found:
             return
+    else:
+        save_addrs(missing)
     p = {"found": found}
     if addr_path:
         p["notfound"] = missing  # tried with name and address: wait a week before the next try
