@@ -839,7 +839,7 @@ def cmd_finish(failed, highlights):
     # today, so the user can send its address the same day
     nopos = sorted((k for k in ks if k not in d["VENUE_POS"] and k not in set(d["skip"])), key=lambda k: k.lower())
     if nopos:
-        pos_lines.append("Uten posisjon – send gjerne adressen: " + "; ".join(k.replace("|", ", ") for k in nopos))
+        pos_lines.append("Uten posisjon (ingen kilde viser posisjon): " + "; ".join(k.replace("|", ", ") for k in nopos))
 
     arts, vens = load_favs()
     fav_items = []
