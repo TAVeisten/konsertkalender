@@ -779,6 +779,16 @@ def cmd_finish(failed, highlights):
     if miss:
         die("STOPP: disse er verken sjekket eller ført opp under --failed:\n  " + "\n  ".join(miss) +
             "\nSjekk dem (batch-fil med \"checked\": [...]), eller før dem opp i --failed med grunn.")
+    # last try at Kartverket before publishing: addresses saved while it was down (adresser.json) get their position now
+    saved_path = os.path.join(ROOT, "adresser.json")
+    try:
+        pending = json.load(open(saved_path, encoding="utf-8")) if os.path.exists(saved_path) else {}
+    except Exception:
+        pending = {}
+    if any(k not in d["VENUE_POS"] for k in pending):
+        print("Siste forsøk hos Kartverket før publisering for %d lagrede adresser:" % len(pending))
+        cmd_geocode(None)
+        st, lines, idx, d = load()
     old_c = (d.get("ADDED") or {}).get("c") or []
     n_start = len(st["orig_keys"])
     prev_day = {}
