@@ -587,7 +587,7 @@ favChip.addEventListener("click",e=>{ e.stopPropagation(); if(!favPanel.hidden){
   favPanel.style.top=(cr.bottom-br.top+4)+"px"; favPanel.style.left=Math.max(0,cr.left-br.left)+"px";
   favCounts(); favPanel.hidden=false; favChip.setAttribute("aria-expanded","true"); });
 favPanel.addEventListener("click",e=>{ e.stopPropagation(); if(e.target.closest(".fok")){ closeFav(); return; }
-  const rmb=e.target.closest(".frm"); if(rmb){ favRemoveArtist(rmb.dataset.key); return; }
+  const rmb=e.target.closest(".frm"); if(rmb){ rmb.dataset.t==="fV"?favRemoveVenue(rmb.dataset.key):favRemoveArtist(rmb.dataset.key); return; }
   const trb=e.target.closest(".ftrib"); if(trb){ state.fS=state.fA=state.fV=state.fN=false; closeFav(); if(state.view!=="list"&&state.view!=="fests") state.view="list";
     const q=$("q"); q.value=trb.dataset.q; q.dispatchEvent(new Event("input")); return; }
   const ex=e.target.closest(".fexp:not(.none)"); if(ex){ const t=ex.closest(".fopt").dataset.f; favOpen.has(t)?favOpen.delete(t):favOpen.add(t); favSubs(); return; }
@@ -627,7 +627,7 @@ function favSubs(){ const keep={fS:state.fS,fA:state.fA,fV:state.fV,fN:state.fN}
       const fl=el("span","flab",lab);
       if(isA){ const tot=actHits(lab); if(!tot) fl.appendChild(el("span","fst","Ingen konserter nå")); else if(!n) fl.appendChild(el("span","fst",tot+" "+(tot===1?"konsert":"konserter")+" – skjult av filtrene")); }
       b.append(el("span","fbox"), fl, el("span","pn fct",String(n)));
-      if(canAdd){ const row=el("div","frow"), rm=el("button","frm","✕"); rm.type="button"; rm.dataset.key=k; rm.setAttribute("aria-label","Fjern "+lab+" fra favorittartistene"); rm.title="Fjern fra favorittartistene"; row.append(b,rm); sub.appendChild(row); }
+      if(FAV_WEB){ const row=el("div","frow"), rm=el("button","frm","✕"), fx=isA?"favorittartistene":"favorittstedene"; rm.type="button"; rm.dataset.t=t; rm.dataset.key=k; rm.setAttribute("aria-label","Fjern "+lab+" fra "+fx); rm.title="Fjern fra "+fx; row.append(b,rm); sub.appendChild(row); }
       else sub.appendChild(b);
       if(isA){ const tr=tribHits(lab); if(tr){ const tb=el("button","ftrib","+ "+tr+" "+(tr===1?"tributekonsert":"tributekonserter")+" – vis"); tb.type="button"; tb.dataset.q=lab; tb.title="Tributekonserter teller ikke som favoritter og gir ikke varsel"; sub.appendChild(tb); } } }); }); }
 // number of upcoming concerts (festival days included) for an artist name, by the same rule as the hearts
@@ -644,6 +644,8 @@ function tribHits(name){ const k=nA(name); if(k.length<2) return 0; let n=0;
 const konsTxt=n=>n?n+" "+(n===1?"konsert":"konserter"):"ingen konserter nå";
 function favRemoveArtist(key){ const name=favA.get(key); if(!name) return; favEx.a.delete(key); favExSave(); favOp("a",name,false);
   favToast("«"+name+"» er fjernet fra favorittartistene.","Angre",()=>favOp("a",name,true)); }
+function favRemoveVenue(key){ const v=favV.get(key); if(!v) return; favEx.v.delete(key); favExSave(); favOp("v",v,false);
+  favToast("«"+v.split("|")[0]+"» er fjernet fra favorittstedene.","Angre",()=>favOp("v",v,true)); }
 // --- «Legg til artister»: type one name or paste many; catches names you already have and suggests the calendar's
 // spelling when a name looks like a typo. Artists with no concert yet are kept and show «Ingen konserter nå».
 let knownArts=null;
