@@ -19,6 +19,9 @@ Working copy and run state live in .kk/ (not committed).
                                                   write artifact.html with summary + time stamp
   python3 tools/update.py check <file.html>       check that every inline script parses
   python3 tools/update.py status                  list checklist items not yet checked this run
+  python3 tools/update.py known <Venue|City or City> [...] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
+                                                  compact list "date artist" of concerts already in the calendar
+                                                  for those venues/towns, so a batch only needs the NEW rows
 
 batch.json:
   {"source": "Eventworld",                       default source name for rows without one
@@ -152,6 +155,7 @@ def today():
 
 def norm(s):
     s = unicodedata.normalize("NFKC", str(s)).lower().strip()
+    s = s.replace("ö", "ø").replace("ä", "æ")  # «Aktiv Dödshjelp» = «Aktiv Dødshjelp»
     s = re.sub(r"^the\s+", "", s)
     return re.sub(r"[^\w]+", "", s)
 
@@ -1004,6 +1008,32 @@ def cmd_finish(failed, highlights):
         print("VARSEL: (ingen)")
 
 
+def cmd_known(args):
+    st, lines, idx, d = load()
+    fr, to, want = st.get("today", ""), "9999", []
+    i = 0
+    while i < len(args):
+        if args[i] == "--from" and i + 1 < len(args):
+            fr = args[i + 1]; i += 2
+        elif args[i] == "--to" and i + 1 < len(args):
+            to = args[i + 1]; i += 2
+        else:
+            want.append(args[i]); i += 1
+    if not want:
+        die("known: give at least one Venue|City or City")
+    for w in want:
+        if "|" in w:
+            v, c = w.split("|", 1)
+            rows = [r for r in d["DATA"] if norm(r[2]) == norm(v) and norm(r[3]) == norm(c)]
+        else:
+            rows = [r for r in d["DATA"] if norm(r[3]) == norm(w)]
+        rows = sorted((r for r in rows if fr <= r[0] <= to), key=lambda r: (r[0], r[1]))
+        print("== %s: %d kjente konserter" % (w, len(rows)))
+        many = "|" not in w
+        for r in rows:
+            print(r[0][2:], r[1] + (" @" + r[2] if many else ""))
+
+
 def cmd_status():
     st = json.load(open(STATE, encoding="utf-8")) if os.path.exists(STATE) else {}
     miss = checklist_missing(st)
@@ -1022,6 +1052,8 @@ def main(a):
         cmd_add(a[1])
     elif c == "status":
         cmd_status()
+    elif c == "known" and len(a) >= 2:
+        cmd_known(a[1:])
     elif c == "venues":
         cmd_venues()
     elif c == "positions" and len(a) == 2:
