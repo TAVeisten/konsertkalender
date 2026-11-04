@@ -511,12 +511,13 @@ async function favSync(){ if(!FAV_WEB||!favToken) return; if(favBusy){ favAgain=
       favBase=remote; store("kk-favbase",favBase);
       if(!favPending.length){ favErr=""; break; }
       if(!favToken){ favErr="nokey"; break; }
+      // only the changes sent now are cleared afterwards: an «Angre» tapped while saving is kept and sent next
       const sent=favPending.slice(), nd=opsOn(remote,sent);
-      if(JSON.stringify(nd)===JSON.stringify(opsOn(remote,[]))){ favPending=favPending.slice(sent.length); store("kk-pending",favPending); favErr=""; break; }
+      if(JSON.stringify(nd)===JSON.stringify(opsOn(remote,[]))){ favPending=favPending.filter(o=>!sent.includes(o)); store("kk-pending",favPending); favErr=""; break; }
       const r=await ghFetch("PUT",Object.assign({message:"Favoritter oppdatert",content:b64e(JSON.stringify(nd,null,1)+"\n"),branch:"main"},sha?{sha}:{}));
       if(r.status===409||r.status===422) continue; // changed from another device meanwhile: read again and retry
       if(!r.ok) throw {status:r.status};
-      favBase=nd; store("kk-favbase",nd); favPending=favPending.slice(sent.length); store("kk-pending",favPending);
+      favBase=nd; store("kk-favbase",nd); favPending=favPending.filter(o=>!sent.includes(o)); store("kk-pending",favPending);
       favErr=""; favSynced=new Date().toISOString(); store("kk-synced",favSynced); break; }
   }catch(e){ favErr=e&&(e.status===401||e.status===403||e.status===404)?"badkey":"net"; }
   favBusy=false; favApply(); reSnap(); if(typeof favUi==="function") favUi(); render();
