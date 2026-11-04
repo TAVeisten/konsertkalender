@@ -298,7 +298,7 @@ html{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
 .fask .fbt{display:flex;flex-wrap:wrap;gap:6px}
 .fask button{font:inherit;font-size:14px;font-weight:600;border:1.5px solid var(--blue);border-radius:8px;background:transparent;color:var(--ink);padding:8px 12px;min-height:42px;cursor:pointer;text-align:left}
 .fask button.yes{background:var(--blue);color:var(--surface)}
-.toast .tact{font:inherit;font-weight:700;background:none;border:0;color:var(--bg);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 4px;margin-left:8px}
+.toast .tact{font:inherit;font-weight:700;background:var(--blue-bg);border:0;border-radius:8px;color:var(--blue);cursor:pointer;padding:8px 14px;min-height:40px;margin-left:12px}
 .pushrow p{margin:0}
 @media (max-width:520px){
   .gig{grid-template-columns:52px minmax(0,1fr);gap:10px}
@@ -489,9 +489,13 @@ function favOp(t,k,on,silent){ favPending=favPending.filter(o=>!(o.t===t&&(t==="
   if(!silent){ render(); if(typeof favUi==="function") favUi(); }
   if(FAV_WEB&&favToken){ clearTimeout(favOp.t); favOp.t=setTimeout(favSync,700); } }
 function favClick(b){ if(!FAV_WEB){ favToast("Stjerner og favoritter merker du i Mine sider eller Safari. De vises her etter neste morgenoppdatering."); return; }
-  if(b.dataset.fa!=null){ const key=favArtistKey(b.dataset.fa); if(key) favOp("a",favA.get(key),false); else favOp("a",b.dataset.fa,true); }
-  else if(b.dataset.fv!=null){ const v=b.dataset.fv, on=favV.has(nV(v)); favOp("v",on?favV.get(nV(v)):v,!on); }
-  else if(b.dataset.id!=null){ favOp("s",b.dataset.id,!favs.has(b.dataset.id)); } }
+  // removing outside the Favoritter menu (♥, 📍 or ☆ on a concert or in a list) shows «Angre» in the box at the bottom
+  if(b.dataset.fa!=null){ const key=favArtistKey(b.dataset.fa); if(key){ const name=favA.get(key); favOp("a",name,false);
+      favToast("«"+name+"» er fjernet fra favorittartistene.","Angre",()=>favOp("a",name,true)); } else favOp("a",b.dataset.fa,true); }
+  else if(b.dataset.fv!=null){ const v=b.dataset.fv, on=favV.has(nV(v)); if(on){ const old=favV.get(nV(v)); favOp("v",old,false);
+      favToast("«"+old.split("|")[0]+"» er fjernet fra favorittstedene.","Angre",()=>favOp("v",old,true)); } else favOp("v",v,true); }
+  else if(b.dataset.id!=null){ const id=b.dataset.id, on=favs.has(id); favOp("s",id,!on);
+    if(on) favToast("Stjernen er fjernet.","Angre",()=>favOp("s",id,true)); } }
 const b64e=x=>{ const u=new TextEncoder().encode(x); let r=""; for(let i=0;i<u.length;i+=8192) r+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(r); };
 const b64d=x=>new TextDecoder().decode(Uint8Array.from(atob(String(x).replace(/\s/g,"")),c=>c.charCodeAt(0)));
 async function ghFetch(method,body,token){ const h={"Accept":"application/vnd.github+json"}, tk=token===undefined?favToken:token; if(tk) h.Authorization="Bearer "+tk;
