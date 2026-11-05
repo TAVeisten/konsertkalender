@@ -114,6 +114,11 @@ FYLKER = ["Oslo", "Akershus", "Buskerud", "Østfold", "Vestfold", "Telemark", "A
           "Møre og Romsdal", "Trøndelag", "Nordland", "Troms", "Finnmark", "Innlandet"]
 PRIORITY = {"Rockefeller|Oslo", "John Dee|Oslo", "Sentrum Scene|Oslo", "Oslo Spektrum|Oslo", "Unity Arena|Fornebu",
             "Union Scene|Drammen", "Kometen|Drammen", "Ekebergsletta|Oslo", "Valle Hovin|Oslo"}
+# the user's focus areas (Oslo, Asker, Bærum, Drammen area, Kongsberg, Bergen, Trondheim). Outside these, a concert is
+# only kept when its venue has a position (the user's rule, 05.11.2026)
+FOCUS_TOWNS = {"Oslo", "Fornebu", "Asker", "Bærum", "Sandvika", "Østerås", "Bekkestua", "Stabekk", "Lysaker", "Høvik",
+               "Heggedal", "Slemmestad", "Sætre", "Røyken", "Hurum", "Holmsbu", "Tofte", "Spikkestad", "Drammen", "Svelvik",
+               "Mjøndalen", "Lier", "Tranby", "Sande", "Hokksund", "Vestfossen", "Kongsberg", "Jondalen", "Bergen", "Trondheim"}
 BIG_CITIES = ["Oslo", "Drammen", "Bergen", "Trondheim", "Stavanger", "Kristiansand", "Fornebu"]
 # venues that sources list under the wrong town
 VENUE_TOWN = {"unity arena": "Fornebu", "ullensaker kulturhus": "Jessheim", "martins pub": "Lillestrøm",
@@ -803,6 +808,14 @@ def cmd_finish(failed, highlights):
     n0 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if r[0] >= t]
     removed = n0 - len(d["DATA"])
+    # outside the focus areas: no position, no concert
+    skipset = set(d["skip"])
+    n1 = len(d["DATA"])
+    d["DATA"] = [r for r in d["DATA"] if r[3] in FOCUS_TOWNS or (r[2] + "|" + r[3]) in d["VENUE_POS"]
+                 or (r[2] + "|" + r[3]) in skipset]
+    nopos_removed = n1 - len(d["DATA"])
+    if nopos_removed:
+        print("Fjernet %d konserter utenfor fokusområdene uten posisjon på spillestedet" % nopos_removed)
     fests_gone = [f["name"] for f in d["FESTS"] if f["end"] < t]
     d["FESTS"] = [f for f in d["FESTS"] if f["end"] >= t]
     d["DATA"].sort(key=lambda r: (r[0], r[3].lower(), r[1].lower()))
@@ -877,7 +890,7 @@ def cmd_finish(failed, highlights):
     secs = []
     if fav_items:
         secs.append({"t": "Nytt fra favorittene", "items": fav_items})  # always the full list
-    if added or removed:
+    if added or removed or nopos_removed:
         items = []
         if added:
             items.append("%s: %s" % (pl(len(added), "ny konsert", "nye konserter"), src_txt))
@@ -889,6 +902,9 @@ def cmd_finish(failed, highlights):
             items.append("Bl.a. " + ", ".join(hl))
         if removed:
             items.append(pl(removed, "passert konsert er fjernet", "passerte konserter er fjernet"))
+        if nopos_removed:
+            items.append(pl(nopos_removed, "konsert utenfor fokusområdene uten posisjon er fjernet",
+                            "konserter utenfor fokusområdene uten posisjon er fjernet"))
         # No new concerts: only the clean-up line is left, so call the section that instead of «Nye konserter»
         secs.append({"t": "Nye konserter" if added else "Opprydding", "items": items})
     if prio:
