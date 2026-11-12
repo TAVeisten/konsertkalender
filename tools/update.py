@@ -36,6 +36,12 @@ batch.json:
                                                   existing festival (same name + year): only new artists, new
                                                   days/stages, changed dates, url and lineupComplete are used
    "cities": {"Town": [lat, lon, "Fylke"]},       new towns (also added to HOMES unless "homes": false)
+   "remove": [{"date":"2026-12-04","artist":"Nordic Tenors","venue":"Moss kulturhus","city":"Moss","why":"dobbel"}],
+                                                  rows to take out (exact date + artist + venue + town; a reason is
+                                                  required); never favourites or priority venues; max 10 per run
+   "move": [{"date":"2026-12-06","artist":"…","venue":"Elefantteateret","city":"Oslo","to_city":"Stavanger",
+             "to_venue":"(optional)","why":"feil by"}],
+                                                  rows with the wrong town/venue: moved, keeping source and NY mark
    "venue_url": {"Venue|City": "https://..."}}
 
 pos.json:
@@ -175,6 +181,7 @@ NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen"}  # foredrag / ikke k
 SKIP_FESTIVAL_VENUES = {"palmesus", "liverpoolfestivalen", "treungen festival", "rakfiskfestivalen",
                         "smeltedigelen"}
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
+MAX_FIXES = 10  # at most this many rows removed/moved per run, so a mistake can never empty the calendar
 
 
 def loose_same(a, b):
@@ -287,7 +294,9 @@ def cmd_start(path):
     lines, idx, d = read_page(path)
     os.makedirs(KK, exist_ok=True)
     shutil.copyfile(path, PAGE)
-    st = {"today": today(), "orig_keys": [key(r) for r in d["DATA"]], "added": [], "unknown_genre": [],
+    oc = (d.get("ADDED") or {}).get("c") or []
+    prev = {key(r): oc[i] for i, r in enumerate(d["DATA"]) if i < len(oc) and oc[i]}
+    st = {"today": today(), "orig_keys": [key(r) for r in d["DATA"]], "prev_day": prev, "fixes": [], "added": [], "unknown_genre": [],
           "fest": {}, "fest_new": [], "fest_dates": [], "pos": {"added": [], "corrected": [], "same": [], "notfound": [], "skip": []}}
     json.dump(st, open(STATE, "w", encoding="utf-8"), ensure_ascii=False)
     t = st["today"]
@@ -337,6 +346,8 @@ def cmd_add(path):
                 d["HOMES"][town] = [round(float(v[0]), 3), round(float(v[1]), 3)]
     for k, u in (b.get("venue_url") or {}).items():
         d["VENUE_URL"].setdefault(k, u)
+
+    apply_fixes(st, d, b, rep, have, added_now)
 
     venues_by_city = {}
     for r in d["DATA"]:
@@ -394,6 +405,11 @@ def cmd_add(path):
                     added_now[nk] = a_
             rep["dup"] += 1
             continue
+        similar = [r for r in d["DATA"] if r[0] == dt and r[3] == city and r[2].lower() != venue.lower()
+                   and loose_same(r[1], artist)]
+        for r in similar:
+            rep.setdefault("maybe_dup", []).append(
+                "ny «%s» (%s) ligner «%s» (%s), samme dato %s i %s" % (artist, venue, r[1], r[2], dt, city))
         have[k] = len(d["DATA"])
         d["DATA"].append(row)
         venues_by_city.setdefault((city, venue.lower()), venue)
@@ -471,9 +487,103 @@ def cmd_add(path):
         out.append("Ukjent sjanger satt til Pop: " + "; ".join(rep["genre"][:10]))
     if rep["nocity"]:
         out.append("MANGLER BY i CITY (legg til i \"cities\"): " + ", ".join(sorted(rep["nocity"])))
+    for x in rep.get("fixed", []):
+        out.append("RETTET: " + x)
+    for x in rep.get("nofix", []):
+        out.append("IKKE RETTET: " + x)
+    for x in rep.get("maybe_dup", []):
+        out.append("MULIG DOBBEL: %s – er det samme konsert, fjern den nye med \"remove\" (why: \"dobbel\")" % x)
     for x in rep["bad"]:
         out.append("HOPPET OVER: " + x)
     print("\n".join(out))
+
+
+def protected(d, r):
+    """Favourite artists/venues and priority venues are never removed by a batch (only moved or reported)."""
+    arts, vens = load_favs()
+    k = r[2] + "|" + r[3]
+    return k in PRIORITY or k.lower() in vens or fav_artist(r[1], arts)
+
+
+def apply_fixes(st, d, b, rep, have, added_now):
+    """"remove" and "move" from a batch: exact rows only, a reason each, at most MAX_FIXES per run."""
+    fixes = st.setdefault("fixes", [])
+    prev = st.setdefault("prev_day", {})
+    todo = [("remove", x) for x in b.get("remove") or []] + [("move", x) for x in b.get("move") or []]
+    if not todo:
+        return
+    if len(fixes) + len(todo) > MAX_FIXES:
+        die("STOPP: %d rettelser i denne kjøringen er mer enn grensen på %d. Ingenting er endret i denne batchen. "
+            "Si fra til brukeren i meldingen i stedet." % (len(fixes) + len(todo), MAX_FIXES))
+    for kind, x in todo:
+        x = x if isinstance(x, dict) else dict(zip(("date", "artist", "venue", "city", "why"), x))
+        dt, ar, ve, ci = (str(x.get(f) or "").strip() for f in ("date", "artist", "venue", "city"))
+        why = str(x.get("why") or "").strip()
+        label = "%s (%s, %s, %s)" % (ar, ve, ci, short_date(dt) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", dt) else dt)
+        if not why:
+            rep.setdefault("nofix", []).append("%s: mangler \"why\" (grunn)" % label)
+            continue
+        hit = [j for j, r in enumerate(d["DATA"]) if r[0] == dt and norm(r[1]) == norm(ar)
+               and norm(r[2]) == norm(ve) and norm(r[3]) == norm(ci)]
+        if len(hit) != 1:
+            rep.setdefault("nofix", []).append("%s: %s" % (label, "fant ingen slik rad" if not hit else "flere like rader"))
+            continue
+        j = hit[0]
+        r = d["DATA"][j]
+        ok_ = key(r)
+        if kind == "remove":
+            if protected(d, r):
+                rep.setdefault("nofix", []).append("%s: favoritt eller prioritert scene – fjernes ikke automatisk, "
+                                                   "si fra til brukeren" % label)
+                continue
+            d["DATA"].pop(j)
+            for k_, v in list(have.items()):
+                if v > j:
+                    have[k_] = v - 1
+            if have.get(ok_) == j:
+                have.pop(ok_)
+            if ok_ not in {key(x_) for x_ in d["DATA"]}:
+                added_now.pop(ok_, None)
+                st["added"] = [a for a in st["added"] if a["k"] != ok_]
+            txt = "Fjernet: %s – %s" % (label, why)
+        else:
+            tc = str(x.get("to_city") or ci).strip()
+            tv = str(x.get("to_venue") or ve).strip()
+            if (tc, tv) == (ci, ve):
+                rep.setdefault("nofix", []).append("%s: \"move\" mangler to_city/to_venue" % label)
+                continue
+            if tc not in d["CITY"]:
+                rep.setdefault("nofix", []).append("%s: byen %s mangler – legg den i \"cities\" i samme batch" % (label, tc))
+                continue
+            nr = [r[0], r[1], tv, tc] + r[4:]
+            nk = key(nr)
+            other = next((i for i, y in enumerate(d["DATA"]) if i != j and key(y) == nk), None)
+            if other is not None and not protected(d, r):  # already there in the right town: the wrong row just goes
+                d["DATA"].pop(j)
+                for k_, v in list(have.items()):
+                    if v > j:
+                        have[k_] = v - 1
+                have.pop(ok_, None)
+                added_now.pop(ok_, None)
+                st["added"] = [a for a in st["added"] if a["k"] != ok_]
+                txt = "Fjernet: %s – %s (fantes fra før i %s)" % (label, why, tc)
+            else:
+                d["DATA"][j] = nr
+                have.pop(ok_, None)
+                have[nk] = j
+                if ok_ in prev:
+                    prev[nk] = prev.pop(ok_)
+                if ok_ in set(st["orig_keys"]):
+                    st["orig_keys"] = [nk if k_ == ok_ else k_ for k_ in st["orig_keys"]]
+                for a in st["added"]:
+                    if a["k"] == ok_:
+                        a.update(k=nk, venue=tv, city=tc)
+                if ok_ in added_now:
+                    added_now[nk] = added_now.pop(ok_)
+                where = tc if tv == ve else "%s, %s" % (tv, tc)
+                txt = "Flyttet: %s til %s – %s" % (label, where, why)
+        fixes.append(txt)
+        rep.setdefault("fixed", []).append(txt)
 
 
 def todo_venues(d, st):
@@ -801,9 +911,12 @@ def cmd_finish(failed, highlights):
     old_c = (d.get("ADDED") or {}).get("c") or []
     n_start = len(st["orig_keys"])
     prev_day = {}
-    for i, r in enumerate(d["DATA"]):
-        if i < n_start and i < len(old_c) and old_c[i]:
-            prev_day[key(r)] = old_c[i]
+    if "prev_day" in st:  # saved at start by key, so rows removed or moved during the run do not shift the NY marks
+        prev_day = dict(st["prev_day"])
+    else:
+        for i, r in enumerate(d["DATA"]):
+            if i < n_start and i < len(old_c) and old_c[i]:
+                prev_day[key(r)] = old_c[i]
     t = st["today"]
     n0 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if r[0] >= t]
@@ -915,6 +1028,8 @@ def cmd_finish(failed, highlights):
         secs.append({"t": "Festivaler", "items": fest_lines})
     if pos_lines:
         secs.append({"t": "Spillesteder", "items": pos_lines})
+    if st.get("fixes"):
+        secs.append({"t": "Rettet", "items": list(st["fixes"])})
     fl = [x.strip() for x in (failed or "").split(";") if x.strip()]
     if fl:
         secs.append({"t": "Kunne ikke sjekkes", "items": fl})
