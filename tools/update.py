@@ -1055,7 +1055,10 @@ def cmd_finish(failed, highlights):
     if not added and len(fl) >= 3:
         head = head.replace("Ingen nye konserter i dag", "Få kilder kunne sjekkes i dag")
     if fav_items:
-        head = "%s fra favorittene · %s" % (pl(len(fav_items), "nyhet", "nyheter"), head)
+        # New concerts first, then the favourites (the user's wish, 15.11.2026)
+        hp = head.split(" · ")
+        hp.insert(1, "%s fra favorittene" % pl(len(fav_items), "nyhet", "nyheter"))
+        head = " · ".join(hp)
     d["SUMMARY"] = {"head": head, "sections": secs}
 
     # ADDED: the day each concert / festival artist came in, as a day number (days since 2026-01-01, 0 = from before
