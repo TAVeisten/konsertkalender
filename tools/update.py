@@ -1001,11 +1001,11 @@ def cmd_finish(failed, highlights):
         f = next((x for x in d["FESTS"] if x["name"] == name), None)
         if f and (f["venue"] + "|" + f["city"]).lower() in vens:
             fav_ven.append("📍 Ny festival på %s: %s" % (f["venue"], txt))
-    # Subheadings «Artister» / «Spillesteder» only when both kinds have news the same day (the user's wish, 15.11.2026);
+    # Subheadings «Artister» / «Spillesteder» whenever that kind has news, also for a single item (the user's wish, 15.11.2026);
     # an item starting with "§ " is drawn as a subheading in the «Nytt i dag» box
     fav_art = fav_items
     fav_items = fav_art + fav_ven
-    fav_show = (["§ Artister"] + fav_art + ["§ Spillesteder"] + fav_ven) if (fav_art and fav_ven) else fav_items
+    fav_show = (["§ Artister"] + fav_art if fav_art else []) + (["§ Spillesteder"] + fav_ven if fav_ven else [])
 
     secs = []
     if added or removed or nopos_removed:
