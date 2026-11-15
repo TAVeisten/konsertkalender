@@ -982,23 +982,30 @@ def cmd_finish(failed, highlights):
         pos_lines.append("Uten posisjon (ingen kilde viser posisjon): " + "; ".join(k.replace("|", ", ") for k in nopos))
 
     arts, vens = load_favs()
-    fav_items = []
+    fav_items, fav_ven, fav_keys = [], [], set()
     for a in added:
         if fav_artist(a["artist"], arts):
+            fav_keys.add((a["date"], a["artist"], a["venue"]))
             fav_items.append("♥ %s (%s, %s, %s)" % (a["artist"], a["venue"], a["city"], short_date(a["date"])))
         elif (a["venue"] + "|" + a["city"]).lower() in vens:
-            fav_items.append("📍 %s: %s (%s)" % (a["venue"], a["artist"], short_date(a["date"])))
+            fav_keys.add((a["date"], a["artist"], a["venue"]))
+            fav_ven.append("📍 %s: %s (%s)" % (a["venue"], a["artist"], short_date(a["date"])))
     for fname, artist, fven, fcity, day, fs, fe in st.get("fest_added", []):
         if fname not in alive:
             continue
         if fav_artist(artist, arts):
             fav_items.append("♥ %s spiller på %s (%s)" % (artist, fname, short_date(day) if day else short_date(fs) + "–" + short_date(fe)))
         elif (fven + "|" + fcity).lower() in vens:
-            fav_items.append("📍 %s: %s (%s)" % (fname, artist, short_date(day) if day else "dag ikke kjent"))
+            fav_ven.append("📍 %s: %s (%s)" % (fname, artist, short_date(day) if day else "dag ikke kjent"))
     for name, txt in st["fest_new"]:
         f = next((x for x in d["FESTS"] if x["name"] == name), None)
         if f and (f["venue"] + "|" + f["city"]).lower() in vens:
-            fav_items.append("📍 Ny festival på %s: %s" % (f["venue"], txt))
+            fav_ven.append("📍 Ny festival på %s: %s" % (f["venue"], txt))
+    # Subheadings «Artister» / «Spillesteder» only when both kinds have news the same day (the user's wish, 15.11.2026);
+    # an item starting with "§ " is drawn as a subheading in the «Nytt i dag» box
+    fav_art = fav_items
+    fav_items = fav_art + fav_ven
+    fav_show = (["§ Artister"] + fav_art + ["§ Spillesteder"] + fav_ven) if (fav_art and fav_ven) else fav_items
 
     secs = []
     if added or removed or nopos_removed:
@@ -1020,9 +1027,16 @@ def cmd_finish(failed, highlights):
         secs.append({"t": "Nye konserter" if added else "Opprydding", "items": items})
     # New concerts first, then the favourites (the user's wish, 15.11.2026)
     if fav_items:
-        secs.append({"t": "Nytt fra favorittene", "items": fav_items})  # always the full list
+        secs.append({"t": "Nytt fra favorittene", "items": fav_show})  # always the full list
+    prio_rest = [a for a in prio if (a["date"], a["artist"], a["venue"]) not in fav_keys]
+    prio_fav = len(prio) - len(prio_rest)
+    prio_items = ["%s: %s (%s)" % (a["venue"], a["artist"], short_date(a["date"])) for a in prio_rest]
     if prio:
-        secs.append({"t": "Prioriterte scener", "items": ["%s (%s, %s)" % (a["artist"], a["venue"], short_date(a["date"])) for a in prio]})
+        pi = list(prio_items)
+        if prio_fav:
+            pi.append("¤ %s vist under «Nytt fra favorittene»" % pl(prio_fav, "konsert", "konserter"))
+        # "n" = all new on the priority venues, also those shown under the favourites (the box shows it as the count)
+        secs.append({"t": "Prioriterte scener", "items": pi, "n": len(prio)})
     if trib:
         secs.append({"t": "Tributekonserter", "items": ["%s (%s, %s)" % (a["artist"], a["venue"], a["city"]) for a in trib]})
     if fest_lines:
@@ -1127,6 +1141,41 @@ def cmd_finish(failed, highlights):
     print("MELDING:")
     print("\n".join(["- " + s_["t"] + ": " + " | ".join(s_["items"]) for s_ in secs]) or "- Ingen endringer")
     print("Totalt: %d konserter, %d festivaler" % (len(d["DATA"]), len(d["FESTS"])))
+    # The daily message, ready to copy (the run adds only the last «Konsertkalender Norge: …» line)
+    hl_msg = [h.strip() for h in (highlights or "").split(";") if h.strip()]
+    if added and not hl_msg:
+        hl_msg = [i[6:] for i in next((x["items"] for x in secs if x["t"] == "Nye konserter"), []) if i.startswith("Bl.a. ")][:1]
+    m = ["**%s**" % head, ""]
+    if added:
+        m.append("**Nye konserter:** %d nye (%s) · %d passerte fjernet" % (len(added), src_txt, removed))
+        if hl_msg:
+            m.append("• Bl.a. " + ", ".join(hl_msg))
+    else:
+        m.append("**Nye konserter:** 0 nye · %d passerte fjernet" % removed)
+    m += ["", "**Nytt fra favorittene**"]
+    if fav_items:
+        for i in fav_show:
+            m.append("_%s_" % i[2:] if i.startswith("§ ") else "• " + i)
+    else:
+        m.append("• Ingen nye i dag")
+    m.append("")
+    pt = "**Prioriterte scener:** %d nye" % len(prio)
+    if prio_fav:
+        pt += " (%d vist under favorittene)" % prio_fav
+    m.append(pt)
+    if prio_items:
+        m += ["• " + i for i in prio_items[:5]]
+        if len(prio_items) > 5:
+            m.append("• … og %d til (se Nytt i dag)" % (len(prio_items) - 5))
+        m.append("")
+    m.append("**Tributekonserter:** %d nye" % len(trib))
+    m.append("**Festivaler:** " + (" · ".join(fest_lines) if fest_lines else "ingen endringer"))
+    m.append("**Spillesteder:** " + ("%d uten posisjon" % len(nopos) if nopos else "alle har posisjon"))
+    m += ["", "**Kunne ikke sjekkes**"]
+    m += ["• " + x for x in fl] if fl else ["• Alt ble sjekket"]
+    print("MELDINGSTEKST (kopier ordrett, legg til siste linje «Konsertkalender Norge: …»):")
+    print("\n".join(m))
+    print("SLUTT PÅ MELDINGSTEKST")
     if fav_items and fav_file().get("push") is False:
         print("Push-varsel er slått av i kalenderens innstillinger, så det sendes ikke.")
         print("VARSEL: (ingen)")
