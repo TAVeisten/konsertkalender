@@ -1001,8 +1001,6 @@ def cmd_finish(failed, highlights):
             fav_items.append("📍 Ny festival på %s: %s" % (f["venue"], txt))
 
     secs = []
-    if fav_items:
-        secs.append({"t": "Nytt fra favorittene", "items": fav_items})  # always the full list
     if added or removed or nopos_removed:
         items = []
         if added:
@@ -1020,6 +1018,9 @@ def cmd_finish(failed, highlights):
                             "konserter utenfor fokusområdene uten posisjon er fjernet"))
         # No new concerts: only the clean-up line is left, so call the section that instead of «Nye konserter»
         secs.append({"t": "Nye konserter" if added else "Opprydding", "items": items})
+    # New concerts first, then the favourites (the user's wish, 15.11.2026)
+    if fav_items:
+        secs.append({"t": "Nytt fra favorittene", "items": fav_items})  # always the full list
     if prio:
         secs.append({"t": "Prioriterte scener", "items": ["%s (%s, %s)" % (a["artist"], a["venue"], short_date(a["date"])) for a in prio]})
     if trib:
