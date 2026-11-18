@@ -497,6 +497,7 @@ def cmd_add(path):
     for x in rep["bad"]:
         out.append("HOPPET OVER: " + x)
     print("\n".join(out))
+    print_fav_nopos(d)
 
 
 def protected(d, r):
@@ -894,7 +895,7 @@ def fav_nopos(d):
 def print_fav_nopos(d):
     todo = fav_nopos(d)
     if todo:
-        print("FAVORITT UTEN POSISJON – finn adressen til disse FØRST (de fjernes ikke):")
+        print("FAVORITT UTEN POSISJON – finn adressen til disse UMIDDELBART, før du går videre:")
         for k in todo:
             print("  " + k)
 
@@ -941,6 +942,14 @@ def cmd_finish(failed, highlights):
     n0 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if r[0] >= t]
     removed = n0 - len(d["DATA"])
+    # a favourite without a position stops the run: it must be found now (the user's decision, 18.11.2026)
+    named = (failed or "").lower()
+    open_favs = [k for k in fav_nopos(d) if k.split("|")[0].lower() not in named]
+    if open_favs:
+        die("STOPP: favoritter uten posisjon må få posisjon NÅ, før kalenderen publiseres:\n  " + "\n  ".join(open_favs) +
+            "\nFor hvert spillested: kjør WebSearch \"<spillested> <by> adresse\", åpne treffene til adressen er funnet, og kjør "
+            "geocode --addresses <fil> eller positions <fil> (\"other\"). Kjør så finish på nytt.\nBare hvis ingen kilde "
+            "viser adressen etter at alle treff er prøvd: før spillestedet opp i --failed med navn og grunn.")
     # no position, no concert - everywhere; favourites stay and are reported so their position gets found
     n1 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if (r[2] + "|" + r[3]) in d["VENUE_POS"] or is_fav_row(r)]
