@@ -120,8 +120,9 @@ FYLKER = ["Oslo", "Akershus", "Buskerud", "Østfold", "Vestfold", "Telemark", "A
           "Møre og Romsdal", "Trøndelag", "Nordland", "Troms", "Finnmark", "Innlandet"]
 PRIORITY = {"Rockefeller|Oslo", "John Dee|Oslo", "Sentrum Scene|Oslo", "Oslo Spektrum|Oslo", "Unity Arena|Fornebu",
             "Union Scene|Drammen", "Kometen|Drammen", "Ekebergsletta|Oslo", "Valle Hovin|Oslo"}
-# the user's focus areas (Oslo, Asker, Bærum, Drammen area, Kongsberg, Bergen, Trondheim). Outside these, a concert is
-# only kept when its venue has a position (the user's rule, 05.11.2026)
+# the user's focus areas (Oslo, Asker, Bærum, Drammen area, Kongsberg, Bergen, Trondheim).
+# Position rule (the user's decision, 18.11.2026): a concert whose venue has no position is always removed, in every
+# town. Only favourite artists and favourite venues are kept, and their position must be found first (see fav_nopos).
 FOCUS_TOWNS = {"Oslo", "Fornebu", "Asker", "Bærum", "Sandvika", "Østerås", "Bekkestua", "Stabekk", "Lysaker", "Høvik",
                "Heggedal", "Slemmestad", "Sætre", "Røyken", "Hurum", "Holmsbu", "Tofte", "Spikkestad", "Drammen", "Svelvik",
                "Mjøndalen", "Lier", "Tranby", "Sande", "Hokksund", "Vestfossen", "Kongsberg", "Jondalen", "Bergen", "Trondheim"}
@@ -879,6 +880,25 @@ def own_name(name):
     return fav_words(s[:m.start()] if m else s)
 
 
+def is_fav_row(r):
+    """A concert by a favourite artist or at a favourite venue."""
+    arts, vens = load_favs()
+    return (r[2] + "|" + r[3]).lower() in vens or fav_artist(r[1], arts)
+
+
+def fav_nopos(d):
+    """Venues without a position that have a concert by a favourite: these must get a position first."""
+    return sorted({r[2] + "|" + r[3] for r in d["DATA"] if (r[2] + "|" + r[3]) not in d["VENUE_POS"] and is_fav_row(r)})
+
+
+def print_fav_nopos(d):
+    todo = fav_nopos(d)
+    if todo:
+        print("FAVORITT UTEN POSISJON – finn adressen til disse FØRST (de fjernes ikke):")
+        for k in todo:
+            print("  " + k)
+
+
 def check_scripts(path):
     s = open(path, encoding="utf-8").read()
     blocks = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", s, re.S)
@@ -921,14 +941,13 @@ def cmd_finish(failed, highlights):
     n0 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if r[0] >= t]
     removed = n0 - len(d["DATA"])
-    # outside the focus areas: no position, no concert
-    skipset = set(d["skip"])
+    # no position, no concert - everywhere; favourites stay and are reported so their position gets found
     n1 = len(d["DATA"])
-    d["DATA"] = [r for r in d["DATA"] if r[3] in FOCUS_TOWNS or (r[2] + "|" + r[3]) in d["VENUE_POS"]
-                 or (r[2] + "|" + r[3]) in skipset]
+    d["DATA"] = [r for r in d["DATA"] if (r[2] + "|" + r[3]) in d["VENUE_POS"] or is_fav_row(r)]
     nopos_removed = n1 - len(d["DATA"])
     if nopos_removed:
-        print("Fjernet %d konserter utenfor fokusområdene uten posisjon på spillestedet" % nopos_removed)
+        print("Fjernet %d konserter uten posisjon på spillestedet" % nopos_removed)
+    print_fav_nopos(d)
     fests_gone = [f["name"] for f in d["FESTS"] if f["end"] < t]
     d["FESTS"] = [f for f in d["FESTS"] if f["end"] >= t]
     d["DATA"].sort(key=lambda r: (r[0], r[3].lower(), r[1].lower()))
@@ -1021,8 +1040,7 @@ def cmd_finish(failed, highlights):
         if removed:
             items.append(pl(removed, "passert konsert er fjernet", "passerte konserter er fjernet"))
         if nopos_removed:
-            items.append(pl(nopos_removed, "konsert utenfor fokusområdene uten posisjon er fjernet",
-                            "konserter utenfor fokusområdene uten posisjon er fjernet"))
+            items.append(pl(nopos_removed, "konsert uten posisjon er fjernet", "konserter uten posisjon er fjernet"))
         # No new concerts: only the clean-up line is left, so call the section that instead of «Nye konserter»
         secs.append({"t": "Nye konserter" if added else "Opprydding", "items": items})
     # New concerts first, then the favourites (the user's wish, 15.11.2026)
@@ -1224,6 +1242,8 @@ def cmd_status():
     due = len(CHECKLIST) - len(st.get("not_due", []))
     print("Sjekket: %d av %d (%d festivaler venter til mandag)" % (due - len(miss), due, len(st.get("not_due", []))))
     print("Gjenstår:\n  " + ("\n  ".join(miss) if miss else "(ingenting)"))
+    if st:
+        print_fav_nopos(load()[3])
 
 
 def main(a):
