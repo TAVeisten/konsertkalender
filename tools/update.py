@@ -137,6 +137,16 @@ VENUE_TOWN_AT = {("kaien", "Førde"): "Sveio", ("hangaren", "Oslo"): "Fornebu"} 
 # preference when two NEW rows are the same concert: venue/organiser sites (0) > Eventworld > Songkick > TicketCo
 PREF = {"Eventworld": 1, "Songkick": 2, "TicketCo": 3}
 TRIBUTE_RE = re.compile(r"tribute|hyllest|candlelight", re.I)
+# film, game and TV music is NOT tribute (the user's rule, 19.11.2026), also when it is a Candlelight show
+FILM_RE = re.compile(r"hans zimmer|lord of the rings|ringenes herre|hobbit|joe hisaishi|ghibli|star wars|harry potter|"
+                     r"john williams|ennio morricone|morricone|james bond|\b007\b|marvel|disney|pixar|anime|"
+                     r"zelda|final fantasy|video ?game|\bgaming\b|film ?music|filmmusikk|movie|soundtrack|"
+                     r"interstellar|gladiator|pirates of the caribbean|game of thrones|stranger things|witcher", re.I)
+
+
+def is_trib(artist, flag=False):
+    """A tribute concert: marked by the source or named like one, but never film/game/TV music."""
+    return (bool(flag) or bool(TRIBUTE_RE.search(artist or ""))) and not FILM_RE.search(artist or "")
 WEEKDAYS = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
 MONTHS = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"]
 CONSTS = ["DATA", "SOURCES", "VENUE_POS", "VENUE_URL", "CITY", "HOMES", "FESTS", "SUMMARY", "FAVS", "ADDED"]
@@ -415,7 +425,7 @@ def cmd_add(path):
         d["DATA"].append(row)
         venues_by_city.setdefault((city, venue.lower()), venue)
         a = {"k": k, "date": dt, "artist": artist, "venue": venue, "city": city, "src": src,
-             "tribute": bool(trib) or bool(TRIBUTE_RE.search(artist))}
+             "tribute": is_trib(artist, trib)}
         added_now[k] = a
         st["added"].append(a)
         rep["new"].append(a)
@@ -970,7 +980,7 @@ def cmd_finish(failed, highlights):
 
     live = {key(r) for r in d["DATA"]}
     added = [a for a in st["added"] if a["k"] in live]
-    trib = [a for a in added if a["tribute"]]
+    trib = [a for a in added if is_trib(a["artist"], a["tribute"])]
     by_src = {}
     for a in added:
         s = a["src"] if a["src"] in ("Eventworld", "Songkick", "TicketCo", "Fever") else "spillesteder og arrangører"
