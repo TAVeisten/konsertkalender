@@ -83,7 +83,7 @@ FESTIVAL_ITEMS = [
     "Nye festivaler i fokusområdene",
 ]
 WEEKLY_DAY = 0  # Monday: every festival is checked and new festivals are searched for
-DAILY_ALL = True  # the user's choice 01.11.2026: every festival is checked every day (the calendar is "updated daily")
+DAILY_ALL = True  # every festival is checked every day (the calendar is "updated daily")
 
 
 def festivals_due(d, t):
@@ -121,7 +121,7 @@ FYLKER = ["Oslo", "Akershus", "Buskerud", "Østfold", "Vestfold", "Telemark", "A
 PRIORITY = {"Rockefeller|Oslo", "John Dee|Oslo", "Sentrum Scene|Oslo", "Oslo Spektrum|Oslo", "Unity Arena|Fornebu",
             "Union Scene|Drammen", "Kometen|Drammen", "Ekebergsletta|Oslo", "Valle Hovin|Oslo"}
 # the user's focus areas (Oslo, Asker, Bærum, Drammen area, Kongsberg, Bergen, Trondheim).
-# Position rule (the user's decision, 18.11.2026): a concert whose venue has no position is always removed, in every
+# Position rule: a concert whose venue has no position is always removed, in every
 # town. Only favourite artists and favourite venues are kept, and their position must be found first (see fav_nopos).
 FOCUS_TOWNS = {"Oslo", "Fornebu", "Asker", "Bærum", "Sandvika", "Østerås", "Bekkestua", "Stabekk", "Lysaker", "Høvik",
                "Heggedal", "Slemmestad", "Sætre", "Røyken", "Hurum", "Holmsbu", "Tofte", "Spikkestad", "Drammen", "Svelvik",
@@ -137,7 +137,7 @@ VENUE_TOWN_AT = {("kaien", "Førde"): "Sveio", ("hangaren", "Oslo"): "Fornebu"} 
 # preference when two NEW rows are the same concert: venue/organiser sites (0) > Eventworld > Songkick > TicketCo
 PREF = {"Eventworld": 1, "Songkick": 2, "TicketCo": 3}
 TRIBUTE_RE = re.compile(r"tribute|hyllest|candlelight", re.I)
-# film, game and TV music is NOT tribute (the user's rule, 19.11.2026), also when it is a Candlelight show
+# film, game and TV music is NOT tribute, also when it is a Candlelight show
 FILM_RE = re.compile(r"hans zimmer|lord of the rings|ringenes herre|hobbit|joe hisaishi|ghibli|star wars|harry potter|"
                      r"john williams|ennio morricone|morricone|james bond|\b007\b|marvel|disney|pixar|anime|"
                      r"zelda|final fantasy|video ?game|\bgaming\b|film ?music|filmmusikk|movie|soundtrack|"
@@ -188,7 +188,7 @@ def key(r):
 
 # acts that are not concerts (talks, lectures) but show up in venue programmes: never added
 NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen"}  # foredrag / ikke konserter (Union Scene)
-# festivals we do not follow: single acts there are not added as concerts (user's choice 01.11.2026)
+# festivals we do not follow: single acts there are not added as concerts
 SKIP_FESTIVAL_VENUES = {"palmesus", "liverpoolfestivalen", "treungen festival", "rakfiskfestivalen",
                         "smeltedigelen"}
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
@@ -378,7 +378,7 @@ def cmd_add(path):
             rep["past"] += 1
             continue
         if norm(artist) in NOT_CONCERT or venue.lower() in SKIP_FESTIVAL_VENUES or "festival" in venue.lower():
-            # single acts at festivals are never added as concerts (user's rule 01.11.2026);
+            # single acts at festivals are never added as concerts;
             # festivals are added only as festivals, in step 4
             rep.setdefault("festskip", []).append("%s (%s)" % (artist, venue))
             continue
@@ -952,7 +952,7 @@ def cmd_finish(failed, highlights):
     n0 = len(d["DATA"])
     d["DATA"] = [r for r in d["DATA"] if r[0] >= t]
     removed = n0 - len(d["DATA"])
-    # a favourite without a position stops the run: it must be found now (the user's decision, 18.11.2026)
+    # a favourite without a position stops the run: it must be found now
     named = (failed or "").lower()
     open_favs = [k for k in fav_nopos(d) if k.split("|")[0].lower() not in named]
     if open_favs:
@@ -1039,7 +1039,7 @@ def cmd_finish(failed, highlights):
         f = next((x for x in d["FESTS"] if x["name"] == name), None)
         if f and (f["venue"] + "|" + f["city"]).lower() in vens:
             fav_ven.append("📍 Ny festival på %s: %s" % (f["venue"], txt))
-    # Subheadings «Artister» / «Spillesteder» whenever that kind has news, also for a single item (the user's wish, 15.11.2026);
+    # Subheadings «Artister» / «Spillesteder» whenever that kind has news, also for a single item;
     # an item starting with "§ " is drawn as a subheading in the «Nytt i dag» box
     fav_art = fav_items
     fav_items = fav_art + fav_ven
@@ -1062,7 +1062,7 @@ def cmd_finish(failed, highlights):
             items.append(pl(nopos_removed, "konsert uten posisjon er fjernet", "konserter uten posisjon er fjernet"))
         # No new concerts: only the clean-up line is left, so call the section that instead of «Nye konserter»
         secs.append({"t": "Nye konserter" if added else "Opprydding", "items": items})
-    # New concerts first, then the favourites (the user's wish, 15.11.2026)
+    # New concerts first, then the favourites
     if fav_items:
         secs.append({"t": "Nytt fra favorittene", "items": fav_show})  # always the full list
     prio_rest = [a for a in prio if (a["date"], a["artist"], a["venue"]) not in fav_keys]
@@ -1107,7 +1107,7 @@ def cmd_finish(failed, highlights):
     if not added and len(fl) >= 3:
         head = head.replace("Ingen nye konserter i dag", "Få kilder kunne sjekkes i dag")
     if fav_items:
-        # New concerts first, then the favourites (the user's wish, 15.11.2026)
+        # New concerts first, then the favourites
         hp = head.split(" · ")
         hp.insert(1, "%s fra favorittene" % pl(len(fav_items), "nyhet", "nyheter"))
         head = " · ".join(hp)
