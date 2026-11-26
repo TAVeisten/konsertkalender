@@ -9,7 +9,7 @@ every day, so the run never has to read the page data itself or write new code.
 Working copy and run state live in .kk/ (not committed).
 
   python3 tools/update.py start <artifact.html>   start a run from the page just read
-  python3 tools/update.py add <batch.json>        add concerts / festivals / towns (repeat per source)
+  python3 tools/update.py add <batch.json> [...]  add concerts / festivals / towns (one file per source, several in one call)
   python3 tools/update.py venues                  list venues to look up at Kartverket this run
   python3 tools/update.py positions <pos.json>    store the Kartverket results
   python3 tools/update.py geocode [--addresses <addr.json>]
@@ -20,8 +20,8 @@ Working copy and run state live in .kk/ (not committed).
   python3 tools/update.py check <file.html>       check that every inline script parses
   python3 tools/update.py status                  list checklist items not yet checked this run
   python3 tools/update.py known <Venue|City or City> [...] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
-                                                  compact list "date artist" of concerts already in the calendar
-                                                  for those venues/towns, so a batch only needs the NEW rows
+                                                  one line per date "yy-mm-dd: artist; artist" of concerts already in
+                                                  the calendar for those venues/towns, so a batch only needs the NEW rows
 
 batch.json:
   {"source": "Eventworld",                       default source name for rows without one
@@ -1249,10 +1249,12 @@ def cmd_known(args):
         else:
             rows = [r for r in d["DATA"] if norm(r[3]) == norm(w)]
         rows = sorted((r for r in rows if fr <= r[0] <= to), key=lambda r: (r[0], r[1]))
-        print("== %s: %d kjente konserter" % (w, len(rows)))
-        many = "|" not in w
+        print("== %s: %d kjente konserter (dato: artister)" % (w, len(rows)))
+        by_day = {}
         for r in rows:
-            print(r[0][2:], r[1] + (" @" + r[2] if many else ""))
+            by_day.setdefault(r[0][2:], []).append(r[1])
+        for day, arts in by_day.items():
+            print("%s: %s" % (day, "; ".join(arts)))
 
 
 def cmd_status():
@@ -1271,8 +1273,10 @@ def main(a):
     c = a[0]
     if c == "start" and len(a) == 2:
         cmd_start(a[1])
-    elif c == "add" and len(a) == 2:
-        cmd_add(a[1])
+    elif c == "add" and len(a) >= 2:
+        for f in a[1:]:
+            print("== %s" % f)
+            cmd_add(f)
     elif c == "status":
         cmd_status()
     elif c == "known" and len(a) >= 2:
