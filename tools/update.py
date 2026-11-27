@@ -66,7 +66,7 @@ CHECKLIST = [
     "Øyafestivalen", "Tons of Rock", "Piknik i Parken", "Inferno Metal Festival", "by:Larm", "Oslo World",
     "Oslo Jazzfestival", "Musikkfest Oslo", "Ultima", "Oslo Kammermusikkfestival", "Drøbak Havnefestival",
     "OverOslo", "Dølajazz", "Kongsberg Jazzfestival", "Ypsilon", "Asker Live", "Bærum Jazzfestival",
-    "Bergenfest", "Festspillene i Bergen", "Bergen Calling", "Nattjazz", "Borealis", "Beyond the Gates",
+    "Bergenfest", "Festspillene i Bergen", "Nattjazz", "Borealis", "Beyond the Gates", "Feelings",
     "Pstereo", "Olavsfestdagene", "Trondheim Jazzfestival", "Trondheim Calling", "NEON",
     "Nye festivaler i fokusområdene",
     "Lier", "Tranby", "Svelvik", "Sande", "Mjøndalen", "Hokksund", "Kongsberg",
