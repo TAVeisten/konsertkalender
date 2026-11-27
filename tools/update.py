@@ -158,11 +158,28 @@ def key(r):
     return r[0] + "|" + norm(r[1]) + "|" + norm(r[3])
 
 
-# acts that are not concerts (talks, lectures) but show up in venue programmes: never added
-NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen"}  # foredrag / ikke konserter (Union Scene)
-# festivals we do not follow: single acts there are not added as concerts
-SKIP_FESTIVAL_VENUES = {"palmesus", "liverpoolfestivalen", "treungen festival", "rakfiskfestivalen",
-                        "smeltedigelen"}
+# names that are not concerts (promoters, talks): never added
+NOT_CONCERT = {"hanswilhelmsteinfeld", "ingvardwilhelmsen", "rockefellerscene", "dirtyoldtown"}
+# events in a venue's programme that are not concerts: never added when the name contains one of these
+NOT_CONCERT_AT = {"union scene": ["hanswilhelmsteinfeld", "erikafatland", "ingvardwilhelmsen", "johnhammersmark",
+                                  "bandmønstring", "ungtblikk", "barnasbursdag", "juleavslutning", "bingobar",
+                                  "reform94", "standup"]}
+# festivals outside the focus areas: neither the festival nor its acts are added
+SKIP_FESTIVALS = ["palmesus", "liverpoolfestivalen", "treungen festival", "rakfiskfestivalen", "smeltedigelen",
+                  "slottsfjell", "polaria music fest", "ålesund live", "hamar open air", "vaulen open air"]
+# Candlelight shows that are not added
+FEVER_SKIP_RE = re.compile(r"vivaldi|disney|christmas classics|valentine|classical romance", re.I)
+
+
+def not_concert(artist, venue):
+    """True for rows that are never added as concerts: promoters, talks and other events in a venue's programme,
+    acts at festivals (festivals are added only as festivals), and Candlelight shows we skip."""
+    na, v = norm(artist), venue.lower()
+    if na in NOT_CONCERT or "festival" in v or any(f in v for f in SKIP_FESTIVALS):
+        return True
+    if any(x in na for x in NOT_CONCERT_AT.get(v, [])):
+        return True
+    return artist.lower().startswith("candlelight") and bool(FEVER_SKIP_RE.search(artist))
 LOOSE_STOP = {"og", "and", "the", "med", "feat", "ft"}
 MAX_FIXES = 10  # at most this many rows removed/moved per run, so a mistake can never empty the calendar
 
@@ -344,9 +361,7 @@ def cmd_add(path):
         if dt < t:
             rep["past"] += 1
             continue
-        if norm(artist) in NOT_CONCERT or venue.lower() in SKIP_FESTIVAL_VENUES or "festival" in venue.lower():
-            # single acts at festivals are never added as concerts;
-            # festivals are added only as festivals, in step 4
+        if not_concert(artist, venue):
             rep.setdefault("festskip", []).append("%s (%s)" % (artist, venue))
             continue
         city = VENUE_TOWN.get(venue.lower(), city)
@@ -405,6 +420,9 @@ def cmd_add(path):
         if not all(nf.get(x) for x in ("name", "start", "end")):
             rep["bad"].append("festival mangler name/start/end: %s" % nf.get("name"))
             continue
+        if any(x in nf["name"].lower() for x in SKIP_FESTIVALS):
+            rep.setdefault("festskip", []).append("%s (festival utenfor fokusområdene)" % nf["name"])
+            continue
         lu = []
         for a in nf.get("lineup") or []:
             a = {"n": a, "g": "Pop", "d": ""} if isinstance(a, str) else dict(a)
@@ -461,6 +479,9 @@ def cmd_add(path):
                    + ("; … og %d til" % (len(rep["new"]) - 12) if len(rep["new"]) > 12 else ""))
     for f in rep.get("fest", []):
         out.append("Festival " + f)
+    if rep.get("festskip"):
+        out.append("Ikke lagt inn (ikke konsert eller festival): " + "; ".join(rep["festskip"][:8])
+                   + ("; … og %d til" % (len(rep["festskip"]) - 8) if len(rep["festskip"]) > 8 else ""))
     if rep["genre"]:
         out.append("Ukjent sjanger satt til Pop: " + "; ".join(rep["genre"][:10]))
     if rep["nocity"]:
